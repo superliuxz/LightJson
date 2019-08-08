@@ -45,10 +45,10 @@ static int parse_number(JsonData *data, JsonValue *value) {
   // Manually check if the number is valid, and move |curr| to the end.
   const char *curr = data->json;
   if (*curr == '-') ++curr;
-  // 0 leading number such as 0123, 0.1 are valid.
+  // if 0 leads, the number must have a decimal component.
   if (*curr == '0') ++curr;
   else {
-    // Cannot have two or more consecutive leading 0s.
+    // else, leading digit cannot be 0.
     if (!ISDIGIT1TO9(*curr)) return PARSE_INVALID_VALUE;
     while (ISDIGIT(*curr)) ++curr;
   }
