@@ -15,6 +15,7 @@ typedef enum {
  * Representing the parsed value.
  */
 struct JsonValue {
+  double number;
   JsonType type;
 };
 
@@ -29,10 +30,13 @@ enum {
   PARSE_OK = 0,
   PARSE_EXPECT_VALUE,
   PARSE_INVALID_VALUE,
-  PARSE_ROOT_NOT_SINGULAR
+  PARSE_ROOT_NOT_SINGULAR,
+  PARSE_NUMBER_TOO_BIG
 };
 
-JsonType get_type(const JsonValue* v);
+JsonType get_type(const JsonValue* value);
+
+double get_number(const JsonValue* value);
 
 int parse(JsonValue* value, const char* json);
 
