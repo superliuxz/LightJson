@@ -31,13 +31,13 @@ enum {
   PARSE_EXPECT_VALUE,
   PARSE_INVALID_VALUE,
   PARSE_ROOT_NOT_SINGULAR,
-  PARSE_NUMBER_TOO_BIG
+  PARSE_NUMBER_TOO_BIG // Overflow.
 };
 
-JsonType get_type(const JsonValue* value);
+JsonType get_type(const JsonValue *value);
 
-double get_number(const JsonValue* value);
+double get_number(const JsonValue *value);
 
-int parse(JsonValue* value, const char* json);
+int parse(JsonValue *value, const char *json);
 
 #endif //LIGHTJSON_LIGHTJSON_H

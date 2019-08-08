@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>
+#include <assert.h>
 #include "LightJson.h"
 
 #define EXPECT(c, ch) do { assert(*c->json == (ch)); c->json++; } while(0)
