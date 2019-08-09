@@ -25,7 +25,6 @@ class JsonValue {
   ~JsonValue() = default;
 
   JsonType getType() const;
-  nullptr_t toNull() const;
   bool toBool() const;
   double toDouble() const;
   std::string toString() const;

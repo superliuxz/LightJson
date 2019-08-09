@@ -36,7 +36,7 @@ Json::Json(Json &&rhs) noexcept : value_(std::move(rhs.value_)) {
 // Move assignment
 Json &Json::operator=(lightjson::Json &&rhs) noexcept = default;
 // Dtor
-Json::~Json() {}
+Json::~Json() = default;
 // Public
 Json Json::parse(const std::string &data, std::string &error) {
   try {

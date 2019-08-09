@@ -18,11 +18,6 @@ JsonType JsonValue::getType() const {
     return JsonType::kString;
 }
 
-nullptr_t JsonValue::toNull() const {
-  assert(std::holds_alternative<nullptr_t>(val_));
-  return std::get<nullptr_t>(val_);
-}
-
 bool JsonValue::toBool() const {
   assert(std::holds_alternative<bool>(val_));
   return std::get<bool>(val_);
