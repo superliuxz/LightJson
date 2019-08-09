@@ -3,7 +3,7 @@
 //
 
 #include <cstring>
-#include <limits>
+#include <math.h>
 #include "Parser.h"
 
 namespace lightjson {
@@ -68,9 +68,8 @@ Json Parser::parseNumber() {
     while (isDigit(++curr_));
   }
   auto val = strtod(start, nullptr);
-  if (val == std::numeric_limits<double>::max()
-      || val == std::numeric_limits<double>::min())
-    error("Number too big");
+  if (std::abs(val) == HUGE_VAL)
+    error("Number out of bound");
   return Json(val);
 }
 

@@ -13,11 +13,35 @@ Json::Json(nullptr_t) : value_(std::make_unique<JsonValue>(nullptr)) {}
 Json::Json(bool val) : value_(std::make_unique<JsonValue>(val)) {}
 Json::Json(double val) : value_(std::make_unique<JsonValue>(val)) {}
 
+Json::Json(const Json &rhs) {
+  switch (rhs.getType()) {
+    case JsonType::kNull:value_ = std::make_unique<JsonValue>(nullptr);
+    case JsonType::kNumber:value_ = std::make_unique<JsonValue>(rhs.toDouble());
+    case JsonType::kBool:value_ = std::make_unique<JsonValue>(rhs.toBool());
+  }
+}
+
+Json::Json(Json &&rhs) noexcept : value_(std::move(rhs.value_)) {
+  rhs.value_ = nullptr;
+}
+
+Json::~Json() {}
+
+void Json::swap(Json &rhs) noexcept {
+  std::swap(value_, rhs.value_);
+}
+
+Json &Json::operator=(Json rhs) {
+  swap(rhs);
+  return *this;
+}
+
 Json Json::parse(const std::string &data, std::string &error) {
   try {
     Parser p(data);
     return p.parse();
   } catch (JsonException &e) {
+    error = e.what();
     return Json(nullptr);
   }
 }
@@ -26,5 +50,11 @@ JsonType Json::getType() const {
   return value_->getType();
 }
 
-}
+bool Json::isNull() const noexcept { return getType() == JsonType::kNull; }
+bool Json::isBool() const noexcept { return getType() == JsonType::kBool; }
+bool Json::isNumber() const noexcept { return getType() == JsonType::kNumber; }
 
+bool Json::toBool() const { return value_->toBool(); }
+double Json::toDouble() const { return value_->toDouble(); }
+
+} // namespace

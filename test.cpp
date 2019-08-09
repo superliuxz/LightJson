@@ -2,149 +2,120 @@
 // Created by William Liu on 2019-08-08.
 //
 
+#include <gtest/gtest.h>
 #include <string>
-#include "LightJson.h"
+#include "Json.h"
 
-static int main_ret = 0;
-static int test_count = 0;
-static int test_pass = 0;
+using namespace std;
 
-#define EXPECT_EQ_BASE(equality, expect, actual, format) \
-    do {\
-        test_count++;\
-        if (equality)\
-            test_pass++;\
-        else {\
-            fprintf(stderr, "%s:%d: expect: " format " actual: " format "\n", __FILE__, __LINE__, expect, actual);\
-            main_ret = 1;\
-        }\
-    } while(0)
-
-#define EXPECT_EQ_INT(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%d")
-#define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%.17g")
-
-#define TEST_NUMBER(expect, json)\
-    do {\
-        JsonValue v;\
-        EXPECT_EQ_INT(PARSE_OK, parse(&v, json));\
-        EXPECT_EQ_INT(kNumber, get_type(&v));\
-        EXPECT_EQ_DOUBLE(expect, get_number(&v));\
-    } while(0)
-
-#define TEST_ERROR(error, json)\
-    do {\
-        JsonValue v;\
-        v.type = kFalse;\
-        EXPECT_EQ_INT(error, parse(&v, json));\
-        EXPECT_EQ_INT(kNull, get_type(&v));\
-    } while(0)
-
-static void test_parse_number() {
-  TEST_NUMBER(0.0, "0");
-  TEST_NUMBER(0.0, "-0");
-  TEST_NUMBER(0.0, "-0.0");
-  TEST_NUMBER(1.0, "1");
-  TEST_NUMBER(-1.0, "-1");
-  TEST_NUMBER(1.5, "1.5");
-  TEST_NUMBER(-1.5, "-1.5");
-  TEST_NUMBER(3.1416, "3.1416");
-  TEST_NUMBER(1E10, "1E10");
-  TEST_NUMBER(1e10, "1e10");
-  TEST_NUMBER(1E+10, "1E+10");
-  TEST_NUMBER(1E-10, "1E-10");
-  TEST_NUMBER(-1E10, "-1E10");
-  TEST_NUMBER(-1e10, "-1e10");
-  TEST_NUMBER(-1E+10, "-1E+10");
-  TEST_NUMBER(-1E-10, "-1E-10");
-  TEST_NUMBER(1.234E+10, "1.234E+10");
-  TEST_NUMBER(1.234E-10, "1.234E-10");
-  TEST_NUMBER(0.0, "1e-10000");
-  TEST_NUMBER(1.0000000000000001, "1.0000000000000001");
-  TEST_NUMBER(4.9406564584124654e-324, "4.9406564584124654e-324");
-  TEST_NUMBER(-4.9406564584124654e-324, "-4.9406564584124654e-324");
-  TEST_NUMBER(2.2250738585072009e-308, "2.2250738585072009e-308");
-  TEST_NUMBER(-2.2250738585072009e-308, "-2.2250738585072009e-308");
-  TEST_NUMBER(2.2250738585072014e-308, "2.2250738585072014e-308");
-  TEST_NUMBER(-2.2250738585072014e-308, "-2.2250738585072014e-308");
-  TEST_NUMBER(1.7976931348623157e+308, "1.7976931348623157e+308");
-  TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
+lightjson::Json parseOk(const string &jsonStr) {
+  string errMsg;
+  auto json = lightjson::Json::parse(jsonStr, errMsg);
+  EXPECT_EQ(errMsg, "");
+  return json;
 }
 
-static void test_parse_null() {
-  JsonValue v;
-  v.type = kFalse;
-  EXPECT_EQ_INT(PARSE_OK, parse(&v, "null"));
-  EXPECT_EQ_INT(kNull, get_type(&v));
+#define testError(expect, strJson)            \
+  do {                                        \
+    string errMsg;                            \
+    lightjson::Json json = lightjson::Json::parse(strJson, errMsg); \
+    auto pos = errMsg.find_first_of(":");     \
+    auto actual = errMsg.substr(0, pos);      \
+    EXPECT_EQ(actual, expect);                \
+  } while (0)
+
+#define testNull(strJson)         \
+  do {                            \
+    auto json = parseOk(strJson); \
+    EXPECT_TRUE(json.isNull());   \
+  } while (0)
+
+#define testBool(expect, content)      \
+  do {                                 \
+    auto json = parseOk(content);      \
+    EXPECT_TRUE(json.isBool());        \
+    EXPECT_EQ(json.toBool(), expect);  \
+    json = lightjson::Json(!expect);   \
+    EXPECT_EQ(json.toBool(), !expect); \
+  } while (0)
+
+#define testNumber(expect, strJson)     \
+  do {                                  \
+    auto json = parseOk(strJson);       \
+    EXPECT_TRUE(json.isNumber());       \
+    EXPECT_EQ(json.toDouble(), expect); \
+  } while (0)
+
+TEST(Str2Json, JsonNull) {
+  testNull("null");
+  testNull("   null\n\r\t");
 }
 
-static void test_parse_true() {
-  JsonValue v;
-  v.type = kFalse;
-  EXPECT_EQ_INT(PARSE_OK, parse(&v, "true"));
-  EXPECT_EQ_INT(kTrue, get_type(&v));
+TEST(Str2Json, JsonBool) {
+  testBool(true, "true");
+  testBool(false, "false");
 }
 
-static void test_parse_false() {
-  JsonValue v;
-  v.type = kTrue;
-  EXPECT_EQ_INT(PARSE_OK, parse(&v, "false"));
-  EXPECT_EQ_INT(kFalse, get_type(&v));
+TEST(Str2Json, JsonNumber) {
+  testNumber(0.0, "0");
+  testNumber(0.0, "-0");
+  testNumber(0.0, "-0.0");
+  testNumber(1.0, "1");
+  testNumber(-1.0, "-1");
+  testNumber(1.5, "1.5");
+  testNumber(-1.5, "-1.5");
+  testNumber(3.1416, "3.1416");
+  testNumber(1E10, "1E10");
+  testNumber(1e10, "1e10");
+  testNumber(1E+10, "1E+10");
+  testNumber(1E-10, "1E-10");
+  testNumber(-1E10, "-1E10");
+  testNumber(-1e10, "-1e10");
+  testNumber(-1E+10, "-1E+10");
+  testNumber(-1E-10, "-1E-10");
+  testNumber(1.234E+10, "1.234E+10");
+  testNumber(1.234E-10, "1.234E-10");
+  testNumber(5.0E-324, "5e-324");
+  testNumber(0, "1e-10000");
+  testNumber(1.0000000000000002, "1.0000000000000002");
+  testNumber(4.9406564584124654e-324, "4.9406564584124654e-324");
+  testNumber(-4.9406564584124654e-324, "-4.9406564584124654e-324");
+  testNumber(2.2250738585072009e-308, "2.2250738585072009e-308");
+  testNumber(-2.2250738585072009e-308, "-2.2250738585072009e-308");
+  testNumber(2.2250738585072014e-308, "2.2250738585072014e-308");
+  testNumber(-2.2250738585072014e-308, "-2.2250738585072014e-308");
+  testNumber(1.7976931348623157e+308, "1.7976931348623157e+308");
+  testNumber(-1.7976931348623157e+308, "-1.7976931348623157e+308");
 }
 
-static void test_parse_expect_value() {
-  TEST_ERROR(PARSE_EXPECT_VALUE, "");
-  TEST_ERROR(PARSE_EXPECT_VALUE, " ");
+TEST(Error, InvalidValue) {
+  testError("Invalid value", "nul");
+  testError("Invalid value", "?");
+  testError("Invalid value", "+0");
+  testError("Invalid value", "+1");
+  testError("Invalid value", ".123");
+  testError("Invalid value", "1.");
+  testError("Invalid value", "inf");
+  testError("Invalid value", "INF");
+  testError("Invalid value", "NAN");
+  testError("Invalid value", "nan");
+  testError("Invalid value", "[1,]");
+  testError("Invalid value", "[\"a\", nul]");
 }
 
-static void test_parse_invalid_value() {
-  TEST_ERROR(PARSE_INVALID_VALUE, "nul");
-  TEST_ERROR(PARSE_INVALID_VALUE, "?");
-
-  /* invalid number */
-  TEST_ERROR(PARSE_INVALID_VALUE, "+0");
-  TEST_ERROR(PARSE_INVALID_VALUE, "+1");
-  // at least one digit before '.'
-  TEST_ERROR(PARSE_INVALID_VALUE, ".123");
-  // at least one digit after '.'
-  TEST_ERROR(PARSE_INVALID_VALUE, "1.");
-  TEST_ERROR(PARSE_INVALID_VALUE, "INF");
-  TEST_ERROR(PARSE_INVALID_VALUE, "inf");
-  TEST_ERROR(PARSE_INVALID_VALUE, "NAN");
-  TEST_ERROR(PARSE_INVALID_VALUE, "nan");
-
+TEST(Error, RootNotSingular) {
+  testError("Root not singular", "null x");
+  testError("Root not singular", "0123");
+  testError("Root not singular", "0x0");
+  testError("Root not singular", "0x123");
 }
 
-static void test_parse_root_not_singular() {
-  TEST_ERROR(PARSE_ROOT_NOT_SINGULAR, "null x");
-  /* invalid number */
-  // after zero should be '.' , 'E' , 'e' or nothing
-  TEST_ERROR(PARSE_ROOT_NOT_SINGULAR, "0123");
-  TEST_ERROR(PARSE_ROOT_NOT_SINGULAR, "0x0");
-  TEST_ERROR(PARSE_ROOT_NOT_SINGULAR, "0x123");
-
+TEST(Error, NumberTooBig) {
+  testError("Number out of bound", "1e309");
+  testError("Number out of bound", "-1e309");
 }
 
-static void test_parse_number_too_big() {
-  TEST_ERROR(PARSE_NUMBER_TOO_BIG, "1e309");
-  TEST_ERROR(PARSE_NUMBER_TOO_BIG, "-1e309");
-}
-
-static void test_parse() {
-  test_parse_null();
-  test_parse_true();
-  test_parse_false();
-  test_parse_expect_value();
-  test_parse_invalid_value();
-  test_parse_root_not_singular();
-  test_parse_number();
-  test_parse_number_too_big();
-}
-
-int main() {
-  test_parse();
-  printf("%d/%d (%3.2f%%) passed\n",
-         test_pass,
-         test_count,
-         test_pass * 100.0 / test_count);
-  return main_ret;
+int main(int argc, char *argv[]) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
