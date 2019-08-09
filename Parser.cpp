@@ -6,7 +6,7 @@
 #include <math.h>
 #include "Parser.h"
 
-namespace lightjson {
+using namespace ::lightjson;
 
 constexpr bool isDigit(const char *ch) { return '0' <= *ch && *ch <= '9'; }
 constexpr bool isDigit1to9(const char *ch) { return '1' <= *ch && *ch <= '9'; }
@@ -20,16 +20,12 @@ Json Parser::parse() {
   return json;
 }
 
-void Parser::parseWhiteSpace() {
-  while (*curr_ == ' ' || *curr_ == '\t' || *curr_ == '\n' || *curr_ == '\r')
-    curr_++;
-}
-
 Json Parser::parseValue() {
   switch (*curr_) {
     case 'n': return parseLiteral("null");
     case 't': return parseLiteral("true");
     case 'f': return parseLiteral("false");
+    case '\"': return parseString();
     case '\0': error("Expect value");
     default: return parseNumber();
   }
@@ -73,5 +69,63 @@ Json Parser::parseNumber() {
   return Json(val);
 }
 
-} // namespace
+/*
+string = quotation-mark *char quotation-mark
+char = unescaped /
+   escape (
+       %x22 /          ; "    quotation mark  U+0022
+       %x5C /          ; \    reverse solidus U+005C
+       %x2F /          ; /    solidus         U+002F
+       %x62 /          ; b    backspace       U+0008
+       %x66 /          ; f    form feed       U+000C
+       %x6E /          ; n    line feed       U+000A
+       %x72 /          ; r    carriage return U+000D
+       %x74 /          ; t    tab             U+0009
+       %x75 4HEXDIG )  ; uXXXX                U+XXXX
+escape = %x5C          ; \
+quotation-mark = %x22  ; "
+unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
+ */
+Json Parser::parseString() {
+  std::string stack;
+  const char *p = curr_;
+  for (;;) {
+    switch (*++p) {
+      // closing quote.
+      case '\"':curr_ = ++p;
+        return Json(stack);
+        // Escape.
+      case '\\':
+        switch (*++p) {
+          case '\"': stack.push_back('\"');
+            break;
+          case '\\': stack.push_back('\\');
+            break;
+          case '/': stack.push_back('/');
+            break;
+          case 'b': stack.push_back('\b');
+            break;
+          case 'f': stack.push_back('\f');
+            break;
+          case 'n': stack.push_back('\n');
+            break;
+          case 't': stack.push_back('\t');
+            break;
+          case 'r': stack.push_back('\r');
+            break;
+          default: error("Invalid escape character");
+        }
+        break;
+      case '\0':error("Missing quotation mark");
+      default:
+        if (static_cast<unsigned char>(*p) < 0x20)
+          error("Invalid char");
+        stack.push_back(*p);
+    }
+  }
+}
 
+void Parser::parseWhiteSpace() {
+  while (*curr_ == ' ' || *curr_ == '\t' || *curr_ == '\n' || *curr_ == '\r')
+    curr_++;
+}

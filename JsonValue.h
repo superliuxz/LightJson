@@ -13,19 +13,25 @@ namespace lightjson {
 
 class JsonValue {
  public:
+  // Ctor
   explicit JsonValue(nullptr_t val) : val_(val) {}
   explicit JsonValue(bool val) : val_(val) {}
   explicit JsonValue(double val) : val_(val) {}
+  explicit JsonValue(const std::string &val) : val_(val) {}
+  // Move ctor.
+  explicit JsonValue(std::string &&val) : val_(std::move(val)) {}
 
+  // Dtor
   ~JsonValue() = default;
 
   JsonType getType() const;
   nullptr_t toNull() const;
   bool toBool() const;
   double toDouble() const;
+  std::string toString() const;
 
  private:
-  std::variant<nullptr_t, bool, double> val_;
+  std::variant<nullptr_t, bool, double, std::string> val_;
 };
 
 } // namespace

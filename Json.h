@@ -30,23 +30,26 @@ class Json {
   explicit Json(bool);
   explicit Json(int val) : Json(val * 1.0f) {}
   explicit Json(double val);
-
+  explicit Json(const char *cStr) : Json(std::string(cStr)) {}
+  explicit Json(const std::string &);
+  // Copy ctor and copy assignment
   Json(const Json &);
+  Json &operator=(const Json &);
+  // Move ctor and assignment
   Json(Json &&) noexcept;
+  Json &operator=(Json &&) noexcept;
+  // Dtor
   ~Json();
 
-  Json &operator=(Json);
-
   static Json parse(const std::string &data, std::string &error);
-
   JsonType getType() const;
-
   bool isNull() const noexcept;
   bool isBool() const noexcept;
   bool isNumber() const noexcept;
-
+  bool isString() const noexcept;
   bool toBool() const;
   double toDouble() const;
+  std::string toString() const;
 
  private:
   void swap(Json &) noexcept;

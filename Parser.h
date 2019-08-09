@@ -13,16 +13,24 @@ namespace lightjson {
 
 class Parser {
  public:
-  Parser(const std::string &data) : curr_(data.c_str()) {}
+  // Ctor
+  explicit Parser(const char *data) : curr_(data) {}
+  explicit Parser(const std::string &data) : curr_(data.c_str()) {}
+  // Make the Parser uncopiable.
+  Parser(Parser &) = delete;
+  Parser &operator=(const Parser &) = delete;
+
   Json parse();
 
  private:
   const char *curr_;
 
-  void parseWhiteSpace();
   Json parseValue();
   Json parseLiteral(const std::string &literal);
   Json parseNumber();
+  Json parseString();
+
+  void parseWhiteSpace();
   void error(const std::string &msg) const {
     throw JsonException(msg + ": " + curr_);
   }

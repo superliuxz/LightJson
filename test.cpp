@@ -15,7 +15,7 @@ lightjson::Json parseOk(const string &jsonStr) {
   return json;
 }
 
-#define testError(expect, strJson)            \
+#define TEST_ERROR(expect, strJson)           \
   do {                                        \
     string errMsg;                            \
     lightjson::Json json = lightjson::Json::parse(strJson, errMsg); \
@@ -24,13 +24,13 @@ lightjson::Json parseOk(const string &jsonStr) {
     EXPECT_EQ(actual, expect);                \
   } while (0)
 
-#define testNull(strJson)         \
+#define TEST_NULL(strJson)        \
   do {                            \
     auto json = parseOk(strJson); \
     EXPECT_TRUE(json.isNull());   \
   } while (0)
 
-#define testBool(expect, content)      \
+#define TEST_BOOL(expect, content)     \
   do {                                 \
     auto json = parseOk(content);      \
     EXPECT_TRUE(json.isBool());        \
@@ -39,80 +39,107 @@ lightjson::Json parseOk(const string &jsonStr) {
     EXPECT_EQ(json.toBool(), !expect); \
   } while (0)
 
-#define testNumber(expect, strJson)     \
+#define TEST_NUMBER(expect, strJson)    \
   do {                                  \
     auto json = parseOk(strJson);       \
     EXPECT_TRUE(json.isNumber());       \
     EXPECT_EQ(json.toDouble(), expect); \
   } while (0)
 
-TEST(Str2Json, JsonNull) {
-  testNull("null");
-  testNull("   null\n\r\t");
+#define TEST_STRING(expect, strJson)   \
+  do {                                 \
+    auto json = parseOk(strJson);      \
+    EXPECT_TRUE(json.isString());      \
+    EXPECT_EQ(json.toString(), expect);\
+  } while (0)
+
+TEST(Success, Null) {
+  TEST_NULL("null");
+  TEST_NULL("   null\n\r\t");
 }
 
-TEST(Str2Json, JsonBool) {
-  testBool(true, "true");
-  testBool(false, "false");
+TEST(Success, Bool) {
+  TEST_BOOL(true, "true");
+  TEST_BOOL(false, "false");
 }
 
-TEST(Str2Json, JsonNumber) {
-  testNumber(0.0, "0");
-  testNumber(0.0, "-0");
-  testNumber(0.0, "-0.0");
-  testNumber(1.0, "1");
-  testNumber(-1.0, "-1");
-  testNumber(1.5, "1.5");
-  testNumber(-1.5, "-1.5");
-  testNumber(3.1416, "3.1416");
-  testNumber(1E10, "1E10");
-  testNumber(1e10, "1e10");
-  testNumber(1E+10, "1E+10");
-  testNumber(1E-10, "1E-10");
-  testNumber(-1E10, "-1E10");
-  testNumber(-1e10, "-1e10");
-  testNumber(-1E+10, "-1E+10");
-  testNumber(-1E-10, "-1E-10");
-  testNumber(1.234E+10, "1.234E+10");
-  testNumber(1.234E-10, "1.234E-10");
-  testNumber(5.0E-324, "5e-324");
-  testNumber(0, "1e-10000");
-  testNumber(1.0000000000000002, "1.0000000000000002");
-  testNumber(4.9406564584124654e-324, "4.9406564584124654e-324");
-  testNumber(-4.9406564584124654e-324, "-4.9406564584124654e-324");
-  testNumber(2.2250738585072009e-308, "2.2250738585072009e-308");
-  testNumber(-2.2250738585072009e-308, "-2.2250738585072009e-308");
-  testNumber(2.2250738585072014e-308, "2.2250738585072014e-308");
-  testNumber(-2.2250738585072014e-308, "-2.2250738585072014e-308");
-  testNumber(1.7976931348623157e+308, "1.7976931348623157e+308");
-  testNumber(-1.7976931348623157e+308, "-1.7976931348623157e+308");
+TEST(Success, Number) {
+  TEST_NUMBER(0.0, "0");
+  TEST_NUMBER(0.0, "-0");
+  TEST_NUMBER(0.0, "-0.0");
+  TEST_NUMBER(1.0, "1");
+  TEST_NUMBER(-1.0, "-1");
+  TEST_NUMBER(1.5, "1.5");
+  TEST_NUMBER(-1.5, "-1.5");
+  TEST_NUMBER(3.1416, "3.1416");
+  TEST_NUMBER(1E10, "1E10");
+  TEST_NUMBER(1e10, "1e10");
+  TEST_NUMBER(1E+10, "1E+10");
+  TEST_NUMBER(1E-10, "1E-10");
+  TEST_NUMBER(-1E10, "-1E10");
+  TEST_NUMBER(-1e10, "-1e10");
+  TEST_NUMBER(-1E+10, "-1E+10");
+  TEST_NUMBER(-1E-10, "-1E-10");
+  TEST_NUMBER(1.234E+10, "1.234E+10");
+  TEST_NUMBER(1.234E-10, "1.234E-10");
+  TEST_NUMBER(5.0E-324, "5e-324");
+  TEST_NUMBER(0, "1e-10000");
+  TEST_NUMBER(1.0000000000000002, "1.0000000000000002");
+  TEST_NUMBER(4.9406564584124654e-324, "4.9406564584124654e-324");
+  TEST_NUMBER(-4.9406564584124654e-324, "-4.9406564584124654e-324");
+  TEST_NUMBER(2.2250738585072009e-308, "2.2250738585072009e-308");
+  TEST_NUMBER(-2.2250738585072009e-308, "-2.2250738585072009e-308");
+  TEST_NUMBER(2.2250738585072014e-308, "2.2250738585072014e-308");
+  TEST_NUMBER(-2.2250738585072014e-308, "-2.2250738585072014e-308");
+  TEST_NUMBER(1.7976931348623157e+308, "1.7976931348623157e+308");
+  TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
+}
+
+TEST(Success, String) {
+  TEST_STRING("", "\"\"");
+  TEST_STRING("Hello", "\"Hello\"");
+  TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
+  TEST_STRING("\" \\ / \b \f \n \r \t",
+              "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
 }
 
 TEST(Error, InvalidValue) {
-  testError("Invalid value", "nul");
-  testError("Invalid value", "?");
-  testError("Invalid value", "+0");
-  testError("Invalid value", "+1");
-  testError("Invalid value", ".123");
-  testError("Invalid value", "1.");
-  testError("Invalid value", "inf");
-  testError("Invalid value", "INF");
-  testError("Invalid value", "NAN");
-  testError("Invalid value", "nan");
-  testError("Invalid value", "[1,]");
-  testError("Invalid value", "[\"a\", nul]");
+  TEST_ERROR("Invalid value", "nul");
+  TEST_ERROR("Invalid value", "?");
+  TEST_ERROR("Invalid value", "+0");
+  TEST_ERROR("Invalid value", "+1");
+  TEST_ERROR("Invalid value", ".123");
+  TEST_ERROR("Invalid value", "1.");
+  TEST_ERROR("Invalid value", "inf");
+  TEST_ERROR("Invalid value", "INF");
+  TEST_ERROR("Invalid value", "NAN");
+  TEST_ERROR("Invalid value", "nan");
+  TEST_ERROR("Invalid value", "[1,]");
+  TEST_ERROR("Invalid value", "[\"a\", nul]");
 }
 
 TEST(Error, RootNotSingular) {
-  testError("Root not singular", "null x");
-  testError("Root not singular", "0123");
-  testError("Root not singular", "0x0");
-  testError("Root not singular", "0x123");
+  TEST_ERROR("Root not singular", "null x");
+  TEST_ERROR("Root not singular", "0123");
+  TEST_ERROR("Root not singular", "0x0");
+  TEST_ERROR("Root not singular", "0x123");
 }
 
 TEST(Error, NumberTooBig) {
-  testError("Number out of bound", "1e309");
-  testError("Number out of bound", "-1e309");
+  TEST_ERROR("Number out of bound", "1e309");
+  TEST_ERROR("Number out of bound", "-1e309");
+}
+
+TEST(Error, MissingQuote) {
+  TEST_ERROR("Missing quotation mark", "\"");
+  TEST_ERROR("Missing quotation mark", "\"abc");
+}
+
+TEST(Error, InvalidEscape) {
+  TEST_ERROR("Invalid escape character", "\"\\v\"");
+  TEST_ERROR("Invalid escape character", "\"\\'\"");
+  TEST_ERROR("Invalid escape character", "\"\\0\"");
+  TEST_ERROR("Invalid escape character", "\"\\x12\"");
 }
 
 int main(int argc, char *argv[]) {
