@@ -34,8 +34,14 @@ Json::Json(Json &&rhs) noexcept : value_(std::move(rhs.value_)) {
   rhs.value_ = nullptr;
 }
 // Move assignment
-Json &Json::operator=(lightjson::Json &&rhs) noexcept = default;
+Json &Json::operator=(Json &&rhs) noexcept = default;
 // Dtor
+// This has to be explicitly declared, otherwise would get an error:
+// In instantiation of 'void std::default_delete<_Tp>::operator()(_Tp*) const [with _Tp = lightjson::JsonValue]':
+// required from 'std::unique_ptr<_Tp, _Dp>::~unique_ptr() [with _Tp = lightjson::JsonValue; _Dp = std::default_delete<lightjson::JsonValue>]'
+// /Users/will/Desktop/LightJson/Json.h:26:7:   required from here
+// invalid application of 'sizeof' to incomplete type 'lightjson::JsonValue'
+// Not sure why this is...
 Json::~Json() = default;
 // Public
 Json Json::parse(const std::string &data, std::string &error) {

@@ -18,9 +18,10 @@ class JsonValue {
   explicit JsonValue(bool val) : val_(val) {}
   explicit JsonValue(double val) : val_(val) {}
   explicit JsonValue(const std::string &val) : val_(val) {}
-  // Move ctor.
-  explicit JsonValue(std::string &&val) : val_(std::move(val)) {}
-
+  // Delete copy ctor and assignment because |Json| has a unique_ptr of
+  // |JsonValue|. unique_ptr cannot be copied.
+  JsonValue(const JsonValue &) = delete;
+  JsonValue &operator=(const JsonValue &) = delete;
   // Dtor
   ~JsonValue() = default;
 
