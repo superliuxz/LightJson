@@ -29,6 +29,7 @@ Json Parser::parseValue() {
     case 't': return parseLiteral("true");
     case 'f': return parseLiteral("false");
     case '\"': return parseString();
+    case '[': return parseArray();
     case '\0': error("Expect value");
     default: return parseNumber();
   }
@@ -142,8 +143,8 @@ Json Parser::parseString() {
             // Try parse \uXXXX\uYYYY
             // https://en.wikipedia.org/wiki/UTF-16#U+D800_to_U+DFFF
             if (0xd800 <= highSurrogate && highSurrogate <= 0xdbff) {
-              if (*++p != '\\') error("Invalid surrogate pair");
-              if (*++p != 'u') error("Invalid surrogate pair");
+              if (*++p != '\\') error("Invalid unicode surrogate");
+              if (*++p != 'u') error("Invalid unicode surrogate");
               int lowSurrogate = parse4hex(&p);
               if (lowSurrogate < 0xdc00 || lowSurrogate > 0xdfff)
                 error("Invalid unicode surrogate");
@@ -164,9 +165,31 @@ Json Parser::parseString() {
       case '\0':error("Missing quotation mark");
       default:
         if (static_cast<unsigned char>(*p) < 0x20)
-          error("Invalid char");
+          error("Invalid character");
         oss << *p;
     }
+  }
+}
+
+Json Parser::parseArray() {
+  std::vector<Json> arr;
+  curr_++;
+  parseWhiteSpace();
+  if (*curr_ == ']') {
+    curr_++;
+    return Json(arr);
+  }
+  for (;;) {
+    parseWhiteSpace();
+    arr.push_back(parseValue());
+    parseWhiteSpace();
+    if (*curr_ == ',')
+      curr_++;
+    else if (*curr_ == ']') {
+      curr_++;
+      return Json(arr);
+    } else
+      error("Missing closing bracket or comma");
   }
 }
 

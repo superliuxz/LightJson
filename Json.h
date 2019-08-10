@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <string>
 #include <memory>
+#include <vector>
 
 namespace lightjson {
 
@@ -26,12 +27,14 @@ class JsonValue;
 class Json {
  public:
   // ctors
+  explicit Json();
   explicit Json(std::nullptr_t);
   explicit Json(bool);
   explicit Json(int val) : Json(val * 1.0f) {}
   explicit Json(double val);
   explicit Json(const char *cStr) : Json(std::string(cStr)) {}
   explicit Json(const std::string &);
+  explicit Json(const std::vector<Json> &);
   // Copy ctor and copy assignment
   Json(const Json &);
   Json &operator=(const Json &);
@@ -47,9 +50,24 @@ class Json {
   bool isBool() const noexcept;
   bool isNumber() const noexcept;
   bool isString() const noexcept;
+  bool isArray() const noexcept;
+
   bool toBool() const;
   double toDouble() const;
   std::string toString() const;
+  std::vector<Json> toArray() const;
+
+  size_t size() const;
+
+  // operators
+  // [] access
+  Json &operator[](size_t);
+  const Json &operator[](size_t) const;
+
+  bool operator==(const Json &) const;
+  inline bool operator!=(const Json &o) {
+    return !(this->operator==(o));
+  }
 
  private:
   void swap(Json &) noexcept;

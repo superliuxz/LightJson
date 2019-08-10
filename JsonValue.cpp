@@ -14,8 +14,12 @@ JsonType JsonValue::getType() const {
     return JsonType::kBool;
   else if (std::holds_alternative<double>(val_))
     return JsonType::kNumber;
-  else
+  else if (std::holds_alternative<std::string>(val_))
     return JsonType::kString;
+  else if (std::holds_alternative<std::vector<Json> >(val_))
+    return JsonType::kArray;
+  else
+    return JsonType::kObject;
 }
 
 bool JsonValue::toBool() const {
@@ -31,4 +35,24 @@ double JsonValue::toDouble() const {
 std::string JsonValue::toString() const {
   assert(std::holds_alternative<std::string>(val_));
   return std::get<std::string>(val_);
+}
+
+std::vector<Json> JsonValue::toArray() const {
+  assert(std::holds_alternative<std::vector<Json> >(val_));
+  return std::get<std::vector<Json> >(val_);
+}
+
+size_t JsonValue::size() const {
+  assert(std::holds_alternative<std::vector<Json> >(val_));
+  return std::get<std::vector<Json> >(val_).size();
+}
+
+const Json &JsonValue::operator[](size_t pos) const {
+  assert(std::holds_alternative<std::vector<Json> >(val_));
+  return std::get<std::vector<Json> >(val_)[pos];
+}
+
+Json &JsonValue::operator[](size_t pos) {
+  assert(std::holds_alternative<std::vector<Json> >(val_));
+  return std::get<std::vector<Json> >(val_)[pos];
 }

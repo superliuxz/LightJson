@@ -10,31 +10,50 @@
 using namespace ::lightjson;
 
 // Ctors
+Json::Json() : Json(nullptr) {}
 Json::Json(nullptr_t) : value_(std::make_unique<JsonValue>(nullptr)) {}
 Json::Json(bool val) : value_(std::make_unique<JsonValue>(val)) {}
 Json::Json(double val) : value_(std::make_unique<JsonValue>(val)) {}
 Json::Json(const std::string &val) : value_(std::make_unique<JsonValue>(val)) {}
+Json::Json(const std::vector<Json> &val) : value_(std::make_unique<JsonValue>(
+    val)) {}
 // Copy ctor
-Json::Json(const Json &rhs) {
-  switch (rhs.getType()) {
-    case JsonType::kNull:value_ = std::make_unique<JsonValue>(nullptr);
-    case JsonType::kNumber:value_ = std::make_unique<JsonValue>(rhs.toDouble());
-    case JsonType::kBool:value_ = std::make_unique<JsonValue>(rhs.toBool());
-    case JsonType::kString:value_ = std::make_unique<JsonValue>(rhs.toString());
+Json::Json(const Json &o) {
+  switch (o.getType()) {
+    case JsonType::kNull: {
+      value_ = std::make_unique<JsonValue>(nullptr);
+      break;
+    }
+    case JsonType::kNumber: {
+      value_ = std::make_unique<JsonValue>(o.toDouble());
+      break;
+    }
+    case JsonType::kBool: {
+      value_ = std::make_unique<JsonValue>(o.toBool());
+      break;
+    }
+    case JsonType::kString: {
+      value_ = std::make_unique<JsonValue>(o.toString());
+      break;
+    }
+    case JsonType::kArray: {
+      value_ = std::make_unique<JsonValue>(o.toArray());
+      break;
+    }
   }
 }
 // Copy assignment
-Json &Json::operator=(const Json &rhs) {
-  Json temp(rhs);
+Json &Json::operator=(const Json &o) {
+  Json temp(o);
   swap(temp);
   return *this;
 }
 // Move ctor
-Json::Json(Json &&rhs) noexcept : value_(std::move(rhs.value_)) {
-  rhs.value_ = nullptr;
+Json::Json(Json &&o) noexcept : value_(std::move(o.value_)) {
+  o.value_ = nullptr;
 }
 // Move assignment
-Json &Json::operator=(Json &&rhs) noexcept = default;
+Json &Json::operator=(Json &&o) noexcept = default;
 // Dtor
 // This has to be explicitly declared, otherwise would get an error:
 // In instantiation of 'void std::default_delete<_Tp>::operator()(_Tp*) const [with _Tp = lightjson::JsonValue]':
@@ -62,11 +81,34 @@ bool Json::isNull() const noexcept { return getType() == JsonType::kNull; }
 bool Json::isBool() const noexcept { return getType() == JsonType::kBool; }
 bool Json::isNumber() const noexcept { return getType() == JsonType::kNumber; }
 bool Json::isString() const noexcept { return getType() == JsonType::kString; }
+bool Json::isArray() const noexcept { return getType() == JsonType::kArray; }
 
 bool Json::toBool() const { return value_->toBool(); }
 double Json::toDouble() const { return value_->toDouble(); }
 std::string Json::toString() const { return value_->toString(); }
+std::vector<Json> Json::toArray() const { return value_->toArray(); }
+
+size_t Json::size() const { return value_->size(); }
+
+Json &Json::operator[](size_t pos) {
+  return value_->operator[](pos);
+}
+const Json &Json::operator[](size_t pos) const {
+  return value_->operator[](pos);
+}
+
+bool Json::operator==(const lightjson::Json &o) const {
+  if (this->getType() != o.getType()) return false;
+  switch (this->getType()) {
+    case JsonType::kNull: return true;
+    case JsonType::kBool: return this->toBool() == o.toBool();
+    case JsonType::kNumber: return this->toDouble() == o.toDouble();
+    case JsonType::kString: return this->toString() == o.toString();
+    case JsonType::kArray: return this->toArray() == o.toArray();
+    default: return false;
+  }
+}
 // Private
-void Json::swap(Json &rhs) noexcept {
-  std::swap(value_, rhs.value_);
+void Json::swap(Json &o) noexcept {
+  std::swap(value_, o.value_);
 }

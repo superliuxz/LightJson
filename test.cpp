@@ -8,33 +8,35 @@
 
 using namespace std;
 
-lightjson::Json parseOk(const string &jsonStr) {
+lightjson::Json assertParseSuccess(const string &jsonStr) {
   string errMsg;
   auto json = lightjson::Json::parse(jsonStr, errMsg);
   EXPECT_EQ(errMsg, "");
   return json;
 }
 
-#define TEST_ERROR(expect, strJson)           \
-  do {                                        \
-    string errMsg;                            \
-    lightjson::Json json =                    \
-        lightjson::Json::                     \
-        parse(strJson, errMsg);               \
-    auto pos = errMsg.find_first_of(":");     \
-    auto actual = errMsg.substr(0, pos);      \
-    EXPECT_EQ(expect, actual);                \
+#define TEST_ERROR(expect, strJson)       \
+  do {                                    \
+    string errMsg;                        \
+    lightjson::Json json =                \
+        lightjson::Json::                 \
+        parse(strJson, errMsg);           \
+    auto pos = errMsg.find_first_of(":"); \
+    auto actual = errMsg.substr(0, pos);  \
+    EXPECT_EQ(expect, actual);            \
   } while (0)
 
-#define TEST_NULL(strJson)        \
-  do {                            \
-    auto json = parseOk(strJson); \
-    EXPECT_TRUE(json.isNull());   \
+#define TEST_NULL(strJson)           \
+  do {                               \
+    auto json =                      \
+        assertParseSuccess(strJson); \
+    EXPECT_TRUE(json.isNull());      \
   } while (0)
 
 #define TEST_BOOL(expect, content)     \
   do {                                 \
-    auto json = parseOk(content);      \
+    auto json =                        \
+        assertParseSuccess(content);   \
     EXPECT_TRUE(json.isBool());        \
     EXPECT_EQ(expect, json.toBool());  \
     json = lightjson::Json(!expect);   \
@@ -43,16 +45,18 @@ lightjson::Json parseOk(const string &jsonStr) {
 
 #define TEST_NUMBER(expect, strJson)    \
   do {                                  \
-    auto json = parseOk(strJson);       \
+    auto json =                         \
+        assertParseSuccess(strJson);    \
     EXPECT_TRUE(json.isNumber());       \
     EXPECT_EQ(expect, json.toDouble()); \
   } while (0)
 
-#define TEST_STRING(expect, strJson)   \
-  do {                                 \
-    auto json = parseOk(strJson);      \
-    EXPECT_TRUE(json.isString());      \
-    EXPECT_EQ(expect, json.toString());\
+#define TEST_STRING(expect, strJson)    \
+  do {                                  \
+    auto json =                         \
+        assertParseSuccess(strJson);    \
+    EXPECT_TRUE(json.isString());       \
+    EXPECT_EQ(expect, json.toString()); \
   } while (0)
 
 TEST(Success, Null) {
@@ -113,6 +117,44 @@ TEST(Success, String) {
               "\"\\ud834\\udd1e\"");  /* G clef sign U+1D11E */
 }
 
+TEST(Success, Array) {
+  lightjson::Json json;
+  json = assertParseSuccess("[ ]");
+  EXPECT_TRUE(json.isArray());
+  EXPECT_EQ(json.size(), 0);
+
+  json = assertParseSuccess("[ null , false , true , 123 , \"abc\" ]");
+  EXPECT_TRUE(json.isArray());
+  EXPECT_EQ(json.size(), 5);
+  EXPECT_EQ(json[0], lightjson::Json(nullptr));
+  EXPECT_EQ(json[1], lightjson::Json(false));
+  EXPECT_EQ(json[2], lightjson::Json(true));
+  EXPECT_EQ(json[3], lightjson::Json(123.0));
+  EXPECT_EQ(json[4], lightjson::Json("abc"));
+
+  json = assertParseSuccess("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]");
+  EXPECT_TRUE(json.isArray());
+  EXPECT_EQ(json.size(), 4);
+
+  EXPECT_TRUE(json[0].isArray());
+  EXPECT_EQ(json[0].size(), 0);
+
+  EXPECT_TRUE(json[1].isArray());
+  EXPECT_EQ(json[1].size(), 1);
+  EXPECT_EQ(json[1][0].toDouble(), 0);
+
+  EXPECT_TRUE(json[2].isArray());
+  EXPECT_EQ(json[2].size(), 2);
+  EXPECT_EQ(json[2][0].toDouble(), 0);
+  EXPECT_EQ(json[2][1].toDouble(), 1);
+
+  EXPECT_TRUE(json[3].isArray());
+  EXPECT_EQ(json[3].size(), 3);
+  EXPECT_EQ(json[3][0].toDouble(), 0);
+  EXPECT_EQ(json[3][1].toDouble(), 1);
+  EXPECT_EQ(json[3][2].toDouble(), 2);
+}
+
 TEST(Error, InvalidValue) {
   TEST_ERROR("Invalid value", "nul");
   TEST_ERROR("Invalid value", "?");
@@ -150,6 +192,52 @@ TEST(Error, InvalidEscape) {
   TEST_ERROR("Invalid escape character", "\"\\'\"");
   TEST_ERROR("Invalid escape character", "\"\\0\"");
   TEST_ERROR("Invalid escape character", "\"\\x12\"");
+}
+
+TEST(Error, MissQuotationMark) {
+  TEST_ERROR("Missing quotation mark", "\"");
+  TEST_ERROR("Missing quotation mark", "\"abc");
+}
+
+TEST(Error, InvalidStringEscape) {
+  TEST_ERROR("Invalid escape character", "\"\\v\"");
+  TEST_ERROR("Invalid escape character", "\"\\'\"");
+  TEST_ERROR("Invalid escape character", "\"\\0\"");
+  TEST_ERROR("Invalid escape character", "\"\\x12\"");
+}
+
+TEST(Error, InvalidCharacter) {
+  TEST_ERROR("Invalid character", "\"\x01\"");
+  TEST_ERROR("Invalid character", "\"\x1F\"");
+}
+
+TEST(Error, InvalidHexValue) {
+  TEST_ERROR("Invalid hex value", "\"\\u\"");
+  TEST_ERROR("Invalid hex value", "\"\\u0\"");
+  TEST_ERROR("Invalid hex value", "\"\\u01\"");
+  TEST_ERROR("Invalid hex value", "\"\\u012\"");
+  TEST_ERROR("Invalid hex value", "\"\\u/000\"");
+  TEST_ERROR("Invalid hex value", "\"\\uG000\"");
+  TEST_ERROR("Invalid hex value", "\"\\u0/00\"");
+  TEST_ERROR("Invalid hex value", "\"\\u0G00\"");
+  TEST_ERROR("Invalid hex value", "\"\\u000/\"");
+  TEST_ERROR("Invalid hex value", "\"\\u00G/\"");
+  TEST_ERROR("Invalid hex value", "\"\\u 123/\"");
+}
+
+TEST(Error, InvalidUnicodeSurrogate) {
+  TEST_ERROR("Invalid unicode surrogate", "\"\\uD800\"");
+  TEST_ERROR("Invalid unicode surrogate", "\"\\uDBFF\"");
+  TEST_ERROR("Invalid unicode surrogate", "\"\\uD800\\\\\\");
+  TEST_ERROR("Invalid unicode surrogate", "\"\\uD800\\uDBFF\"");
+  TEST_ERROR("Invalid unicode surrogate", "\"\\uD800\\uE000\"");
+}
+
+TEST(Error, MissingClosingBracketComma) {
+  TEST_ERROR("Missing closing bracket or comma", "[1");
+  TEST_ERROR("Missing closing bracket or comma", "[1}");
+  TEST_ERROR("Missing closing bracket or comma", "[1 2");
+  TEST_ERROR("Missing closing bracket or comma", "[[]");
 }
 
 int main(int argc, char *argv[]) {
