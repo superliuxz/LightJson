@@ -31,6 +31,7 @@ class Parser {
   Json parseString();
 
   void parseWhiteSpace();
+  int parse4hex(const char**);
   void error(const std::string &msg) const {
     throw JsonException(msg + ": " + curr_);
   }

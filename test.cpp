@@ -18,10 +18,12 @@ lightjson::Json parseOk(const string &jsonStr) {
 #define TEST_ERROR(expect, strJson)           \
   do {                                        \
     string errMsg;                            \
-    lightjson::Json json = lightjson::Json::parse(strJson, errMsg); \
+    lightjson::Json json =                    \
+        lightjson::Json::                     \
+        parse(strJson, errMsg);               \
     auto pos = errMsg.find_first_of(":");     \
     auto actual = errMsg.substr(0, pos);      \
-    EXPECT_EQ(actual, expect);                \
+    EXPECT_EQ(expect, actual);                \
   } while (0)
 
 #define TEST_NULL(strJson)        \
@@ -34,23 +36,23 @@ lightjson::Json parseOk(const string &jsonStr) {
   do {                                 \
     auto json = parseOk(content);      \
     EXPECT_TRUE(json.isBool());        \
-    EXPECT_EQ(json.toBool(), expect);  \
+    EXPECT_EQ(expect, json.toBool());  \
     json = lightjson::Json(!expect);   \
-    EXPECT_EQ(json.toBool(), !expect); \
+    EXPECT_EQ(!expect, json.toBool()); \
   } while (0)
 
 #define TEST_NUMBER(expect, strJson)    \
   do {                                  \
     auto json = parseOk(strJson);       \
     EXPECT_TRUE(json.isNumber());       \
-    EXPECT_EQ(json.toDouble(), expect); \
+    EXPECT_EQ(expect, json.toDouble()); \
   } while (0)
 
 #define TEST_STRING(expect, strJson)   \
   do {                                 \
     auto json = parseOk(strJson);      \
     EXPECT_TRUE(json.isString());      \
-    EXPECT_EQ(json.toString(), expect);\
+    EXPECT_EQ(expect, json.toString());\
   } while (0)
 
 TEST(Success, Null) {
@@ -101,6 +103,14 @@ TEST(Success, String) {
   TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
   TEST_STRING("\" \\ / \b \f \n \r \t",
               "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
+  TEST_STRING(std::string("Hello\0World", 11), "\"Hello\\u0000World\"");
+  TEST_STRING("\x24", "\"\\u0024\"");         /* Dollar sign U+0024 */
+  TEST_STRING("\xC2\xA2", "\"\\u00A2\"");     /* Cents sign U+00A2 */
+  TEST_STRING("\xE2\x82\xAC", "\"\\u20AC\""); /* Euro sign U+20AC */
+  TEST_STRING("\xF0\x9D\x84\x9E",
+              "\"\\uD834\\uDD1E\"");  /* G clef sign U+1D11E */
+  TEST_STRING("\xF0\x9D\x84\x9E",
+              "\"\\ud834\\udd1e\"");  /* G clef sign U+1D11E */
 }
 
 TEST(Error, InvalidValue) {

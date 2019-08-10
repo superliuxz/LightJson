@@ -4,6 +4,9 @@
 
 #include <cstring>
 #include <math.h>
+#include <locale>
+#include <codecvt>
+#include <sstream>
 #include "Parser.h"
 
 using namespace ::lightjson;
@@ -87,32 +90,74 @@ quotation-mark = %x22  ; "
 unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
  */
 Json Parser::parseString() {
-  std::string stack;
+  std::wstring_convert<std::codecvt_utf8<wchar_t> > convert;
+  std::ostringstream oss;
   const char *p = curr_;
   for (;;) {
     switch (*++p) {
       // closing quote.
-      case '\"':curr_ = ++p;
-        return Json(stack);
+      case '\"': {
+        curr_ = ++p;
+        const char *cstr = oss.str().c_str();
+        const auto size = oss.tellp();
+        return Json(std::string(cstr, size));
+      }
         // Escape.
       case '\\':
         switch (*++p) {
-          case '\"': stack.push_back('\"');
+          case '\"': {
+            oss << '\"';
             break;
-          case '\\': stack.push_back('\\');
+          }
+          case '\\': {
+            oss << '\\';
             break;
-          case '/': stack.push_back('/');
+          }
+          case '/': {
+            oss << '/';
             break;
-          case 'b': stack.push_back('\b');
+          }
+          case 'b': {
+            oss << '\b';
             break;
-          case 'f': stack.push_back('\f');
+          }
+          case 'f': {
+            oss << '\f';
             break;
-          case 'n': stack.push_back('\n');
+          }
+          case 'n': {
+            oss << '\n';
             break;
-          case 't': stack.push_back('\t');
+          }
+          case 't': {
+            oss << '\t';
             break;
-          case 'r': stack.push_back('\r');
+          }
+          case 'r': {
+            oss << '\r';
             break;
+          }
+          case 'u': {
+            int highSurrogate = parse4hex(&p);
+            // Try parse \uXXXX\uYYYY
+            // https://en.wikipedia.org/wiki/UTF-16#U+D800_to_U+DFFF
+            if (0xd800 <= highSurrogate && highSurrogate <= 0xdbff) {
+              if (*++p != '\\') error("Invalid surrogate pair");
+              if (*++p != 'u') error("Invalid surrogate pair");
+              int lowSurrogate = parse4hex(&p);
+              if (lowSurrogate < 0xdc00 || lowSurrogate > 0xdfff)
+                error("Invalid unicode surrogate");
+              highSurrogate =
+                  (((highSurrogate - 0xd800) << 10) | (lowSurrogate - 0xdc00))
+                      + 0x10000;
+            }
+            std::string utf8 = convert.to_bytes(highSurrogate);
+            // cannot convert to char* here because if utf8='\0', stf8.c_str()
+            // will terminate right away. Therefore manually push char into the
+            // stream.
+            for (auto &ch: utf8) oss << ch;
+            break;
+          }
           default: error("Invalid escape character");
         }
         break;
@@ -120,7 +165,7 @@ Json Parser::parseString() {
       default:
         if (static_cast<unsigned char>(*p) < 0x20)
           error("Invalid char");
-        stack.push_back(*p);
+        oss << *p;
     }
   }
 }
@@ -128,4 +173,18 @@ Json Parser::parseString() {
 void Parser::parseWhiteSpace() {
   while (*curr_ == ' ' || *curr_ == '\t' || *curr_ == '\n' || *curr_ == '\r')
     curr_++;
+}
+
+int Parser::parse4hex(const char **p) {
+  int u = 0;
+  for (int i = 0; i < 4; ++i) {
+    auto curr = static_cast<unsigned>(toupper(*++*p));
+    u <<= 4;
+    if ('0' <= curr && curr <= '9') u |= (curr - '0');
+    else if ('A' <= curr && curr <= 'F') u |= (curr - 'A' + 10);
+    else {
+      error("Invalid hex value");
+    }
+  }
+  return u;
 }
