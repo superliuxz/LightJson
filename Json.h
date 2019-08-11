@@ -58,7 +58,7 @@ class Json {
   bool isObject() const noexcept;
 
   bool toBool() const;
-  double toDouble() const;
+  double toNumber() const;
   std::string toString() const;
   Json::array toArray() const;
   Json::object toObject() const;

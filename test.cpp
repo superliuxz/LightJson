@@ -48,7 +48,7 @@ lightjson::Json assertParseSuccess(const string &jsonStr) {
     auto json =                         \
         assertParseSuccess(strJson);    \
     EXPECT_TRUE(json.isNumber());       \
-    EXPECT_EQ(expect, json.toDouble()); \
+    EXPECT_EQ(expect, json.toNumber()); \
   } while (0)
 
 #define TEST_STRING(expect, strJson)    \
@@ -145,18 +145,18 @@ TEST(ParseSuccess, Array) {
 
   EXPECT_TRUE(json[1].isArray());
   EXPECT_EQ(json[1].size(), 1);
-  EXPECT_EQ(json[1][0].toDouble(), 0);
+  EXPECT_EQ(json[1][0].toNumber(), 0);
 
   EXPECT_TRUE(json[2].isArray());
   EXPECT_EQ(json[2].size(), 2);
-  EXPECT_EQ(json[2][0].toDouble(), 0);
-  EXPECT_EQ(json[2][1].toDouble(), 1);
+  EXPECT_EQ(json[2][0].toNumber(), 0);
+  EXPECT_EQ(json[2][1].toNumber(), 1);
 
   EXPECT_TRUE(json[3].isArray());
   EXPECT_EQ(json[3].size(), 3);
-  EXPECT_EQ(json[3][0].toDouble(), 0);
-  EXPECT_EQ(json[3][1].toDouble(), 1);
-  EXPECT_EQ(json[3][2].toDouble(), 2);
+  EXPECT_EQ(json[3][0].toNumber(), 0);
+  EXPECT_EQ(json[3][1].toNumber(), 1);
+  EXPECT_EQ(json[3][2].toNumber(), 2);
 }
 
 TEST(ParseSuccess, Object) {
@@ -191,7 +191,7 @@ TEST(ParseSuccess, Object) {
   EXPECT_EQ(json["t"].toBool(), true);
 
   EXPECT_TRUE(json["i"].isNumber());
-  EXPECT_EQ(json["i"].toDouble(), 123.0);
+  EXPECT_EQ(json["i"].toNumber(), 123.0);
 
   EXPECT_TRUE(json["s"].isString());
   EXPECT_EQ(json["s"].toString(), "abc");
@@ -199,16 +199,16 @@ TEST(ParseSuccess, Object) {
   EXPECT_TRUE(json["a"].isArray());
   EXPECT_EQ(json["a"].size(), 3);
   EXPECT_TRUE(json["a"][0].isNumber());
-  EXPECT_EQ(json["a"][0].toDouble(), 1);
+  EXPECT_EQ(json["a"][0].toNumber(), 1);
   EXPECT_TRUE(json["a"][1].isNumber());
-  EXPECT_EQ(json["a"][1].toDouble(), 2);
+  EXPECT_EQ(json["a"][1].toNumber(), 2);
   EXPECT_TRUE(json["a"][2].isNumber());
-  EXPECT_EQ(json["a"][2].toDouble(), 3);
+  EXPECT_EQ(json["a"][2].toNumber(), 3);
 
   EXPECT_TRUE(json["o"].isObject());
   EXPECT_EQ(json["o"].size(), 3);
   EXPECT_TRUE(json["o"]["1"].isNumber());
-  EXPECT_EQ(json["o"]["1"].toDouble(), 1.3);
+  EXPECT_EQ(json["o"]["1"].toNumber(), 1.3);
   EXPECT_TRUE(json["o"]["2"].isString());
   EXPECT_EQ(json["o"]["2"].toString(), "2");
   EXPECT_TRUE(json["o"]["3"].isNull());
@@ -337,11 +337,11 @@ TEST(Json, Constructor) {
 
   json = lightjson::Json(0);
   EXPECT_TRUE(json.isNumber());
-  EXPECT_EQ(json.toDouble(), 0);
+  EXPECT_EQ(json.toNumber(), 0);
 
   json = lightjson::Json(100.1);
   EXPECT_TRUE(json.isNumber());
-  EXPECT_EQ(json.toDouble(), 100.1);
+  EXPECT_EQ(json.toNumber(), 100.1);
 
   json = lightjson::Json("hello");
   EXPECT_TRUE(json.isString());

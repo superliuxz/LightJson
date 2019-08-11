@@ -27,7 +27,7 @@ Json::Json(const Json &o) {
       break;
     }
     case JsonType::kNumber: {
-      value_ = std::make_unique<JsonValue>(o.toDouble());
+      value_ = std::make_unique<JsonValue>(o.toNumber());
       break;
     }
     case JsonType::kBool: {
@@ -91,7 +91,7 @@ bool Json::isArray() const noexcept { return getType() == JsonType::kArray; }
 bool Json::isObject() const noexcept { return getType() == JsonType::kObject; }
 
 bool Json::toBool() const { return value_->toBool(); }
-double Json::toDouble() const { return value_->toDouble(); }
+double Json::toNumber() const { return value_->toDouble(); }
 std::string Json::toString() const { return value_->toString(); }
 Json::array Json::toArray() const { return value_->toArray(); }
 Json::object Json::toObject() const { return value_->toObject(); }
@@ -118,7 +118,7 @@ bool Json::operator==(const lightjson::Json &o) const {
   switch (this->getType()) {
     case JsonType::kNull: return true;
     case JsonType::kBool: return this->toBool() == o.toBool();
-    case JsonType::kNumber: return this->toDouble() == o.toDouble();
+    case JsonType::kNumber: return this->toNumber() == o.toNumber();
     case JsonType::kString: return this->toString() == o.toString();
     case JsonType::kArray: return this->toArray() == o.toArray();
     case JsonType::kObject: return this->toObject() == o.toObject();
