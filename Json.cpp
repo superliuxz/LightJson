@@ -3,6 +3,8 @@
 //
 
 #include <memory>
+#include <sstream>
+#include <iomanip>
 #include "Json.h"
 #include "JsonValue.h"
 #include "Parser.h"
@@ -79,6 +81,17 @@ Json Json::parse(const std::string &data, std::string &error) {
   }
 }
 
+std::string Json::serialize() const {
+  switch (value_->getType()) {
+    case JsonType::kNull: return "null";
+    case JsonType::kBool: return value_->toBool() ? "true" : "false";
+    case JsonType::kNumber: return serializeNumber();
+    case JsonType::kString: return serializeString();
+    case JsonType::kArray: return serializeArray();
+    default:return serializeObject();
+  }
+}
+
 JsonType Json::getType() const {
   return value_->getType();
 }
@@ -128,4 +141,79 @@ bool Json::operator==(const lightjson::Json &o) const {
 // Private
 void Json::swap(Json &o) noexcept {
   std::swap(value_, o.value_);
+}
+
+std::string Json::serializeNumber() const {
+  char buf[32];
+  snprintf(buf, sizeof(buf), "%.17g", value_->toDouble());
+  return buf;
+}
+
+std::string Json::serializeString() const {
+  std::string retVal{"\""};
+  for (auto ch: value_->toString()) {
+    switch (ch) {
+      case '\"': {
+        retVal += "\\\"";
+        break;
+      }
+      case '\\': {
+        retVal += "\\\\";
+        break;
+      }
+      case '\b': {
+        retVal += "\\b";
+        break;
+      }
+      case '\f': {
+        retVal += "\\f";
+        break;
+      }
+      case '\n': {
+        retVal += "\\n";
+        break;
+      }
+      case '\r': {
+        retVal += "\\r";
+        break;
+      }
+      case '\t': {
+        retVal += "\\t";
+        break;
+      }
+      default: {
+        auto v = static_cast<unsigned>(ch);
+        if (v < 0x20) {
+          std::stringstream ss;
+          ss << "\\u" << std::setfill('0') << std::setw(4) << v;
+          retVal += ss.str();
+        } else {
+          retVal += ch;
+        }
+      }
+    }
+  }
+  return retVal + '"';
+}
+
+std::string Json::serializeArray() const {
+  std::string retVal{"["};
+  for (auto i = 0; i != value_->size(); ++i) {
+    if (i > 0) retVal += ", ";
+    retVal += (*this)[i].serialize();
+  }
+  return retVal + "]";
+}
+
+std::string Json::serializeObject() const {
+  std::string retVal{"{"};
+  bool seen1st = false;
+  for (const auto &p: value_->toObject()) {
+    if (!seen1st) seen1st = true;
+    else retVal += ", ";
+    retVal += "\"" + p.first + "\"";
+    retVal += ": ";
+    retVal += p.second.serialize();
+  }
+  return retVal + "}";
 }

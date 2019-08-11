@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(LightJson)
 
 set(CMAKE_CXX_STANDARD 17)
+enable_testing() # CLion can run individual suite with this line.
 
 ##
 # Copied from

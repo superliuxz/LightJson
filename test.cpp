@@ -6,10 +6,8 @@
 #include <string>
 #include "Json.h"
 
-using namespace std;
-
-lightjson::Json assertParseSuccess(const string &jsonStr) {
-  string errMsg;
+lightjson::Json assertParseSuccess(const std::string &jsonStr) {
+  std::string errMsg;
   auto json = lightjson::Json::parse(jsonStr, errMsg);
   EXPECT_EQ(errMsg, "");
   return json;
@@ -17,7 +15,7 @@ lightjson::Json assertParseSuccess(const string &jsonStr) {
 
 #define TEST_ERROR(expect, strJson)       \
   do {                                    \
-    string errMsg;                        \
+    std::string errMsg;                   \
     lightjson::Json json =                \
         lightjson::Json::                 \
         parse(strJson, errMsg);           \
@@ -57,6 +55,18 @@ lightjson::Json assertParseSuccess(const string &jsonStr) {
         assertParseSuccess(strJson);    \
     EXPECT_TRUE(json.isString());       \
     EXPECT_EQ(expect, json.toString()); \
+  } while (0)
+
+#define TEST_ROUNDTRIP(expect)                        \
+  do {                                                \
+    lightjson::Json json =                            \
+        assertParseSuccess(expect);                   \
+    auto actual = json.serialize();                   \
+    if (json.isNumber())                              \
+      EXPECT_EQ(std::strtod(actual.c_str(), nullptr), \
+                std::strtod(expect, nullptr));        \
+    else                                              \
+      EXPECT_EQ(actual, expect);                      \
   } while (0)
 
 TEST(ParseSuccess, Null) {
@@ -212,6 +222,64 @@ TEST(ParseSuccess, Object) {
   EXPECT_TRUE(json["o"]["2"].isString());
   EXPECT_EQ(json["o"]["2"].toString(), "2");
   EXPECT_TRUE(json["o"]["3"].isNull());
+}
+
+TEST(RoundTrip, Literal) {
+  TEST_ROUNDTRIP("null");
+  TEST_ROUNDTRIP("true");
+  TEST_ROUNDTRIP("false");
+}
+
+TEST(RoundTrip, Number) {
+  TEST_ROUNDTRIP("0");
+  TEST_ROUNDTRIP("-0");
+  TEST_ROUNDTRIP("1");
+  TEST_ROUNDTRIP("-0");
+  TEST_ROUNDTRIP("1.5");
+  TEST_ROUNDTRIP("-1.5");
+  TEST_ROUNDTRIP("3.25");
+  TEST_ROUNDTRIP("1e+20");
+  TEST_ROUNDTRIP("1.234e+20");
+  TEST_ROUNDTRIP("1.234e-20");
+  TEST_ROUNDTRIP("1.0000000000000002");
+  TEST_ROUNDTRIP("4.9406564584124654e-324");
+  TEST_ROUNDTRIP("-4.9406564584124654e-324");
+  TEST_ROUNDTRIP("2.2250738585072009e-308");
+  TEST_ROUNDTRIP("-2.2250738585072009e-308");
+  TEST_ROUNDTRIP("2.2250738585072014e-308");
+  TEST_ROUNDTRIP("-2.2250738585072014e-308");
+  TEST_ROUNDTRIP("1.7976931348623157e+308");
+  TEST_ROUNDTRIP("-1.7976931348623157e+308");
+}
+
+TEST(RoundTrip, String) {
+  TEST_ROUNDTRIP("\"\"");
+  TEST_ROUNDTRIP("\"Hello\"");
+  TEST_ROUNDTRIP("\"Hello\\nWorld\"");
+  TEST_ROUNDTRIP("\"\\\" \\\\ / \\b \\f \\n \\r \\t\"");
+  TEST_ROUNDTRIP("\"Hello\\u0000World\"");
+}
+
+TEST(RoundTrip, Array) {
+  TEST_ROUNDTRIP("[]");
+  TEST_ROUNDTRIP("[null, false, true, 123, \"abc\", [1, 2, 3]]");
+}
+
+TEST(RoundTrip, Object) {
+  TEST_ROUNDTRIP("{}");
+  // TODO: deterministic ordering of map.
+  std::string jsonString = "{"
+                           "\"n\": null, "
+                           "\"f\": false, "
+                           "\"t\": true, "
+                           "\"i\": 123, "
+                           "\"a\": [1, 2, 3], "
+                           "\"s\": \"abc\", "
+                           "\"o\": {\"1\": 1, \"2\": 2, \"3\": 3}"
+                           "}";
+  auto json = assertParseSuccess(jsonString);
+  auto json2 = assertParseSuccess(json.serialize());
+  EXPECT_EQ(json, json2);
 }
 
 TEST(ParseError, InvalidValue) {

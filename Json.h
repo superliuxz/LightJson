@@ -47,8 +47,10 @@ class Json {
   Json &operator=(Json &&) noexcept;
   // Dtor
   ~Json();
-
+  // Parse and serialize
   static Json parse(const std::string &data, std::string &error);
+  std::string serialize() const;
+
   JsonType getType() const;
   bool isNull() const noexcept;
   bool isBool() const noexcept;
@@ -72,14 +74,23 @@ class Json {
   // key-val access
   Json &operator[](const std::string &);
   const Json &operator[](const std::string &) const;
-
+  // Comparison
   bool operator==(const Json &) const;
   inline bool operator!=(const Json &o) {
     return !(this->operator==(o));
   }
+  // Stream
+  inline std::ostream &operator<<(std::ostream &os) {
+    return os << this->serialize();
+  }
 
  private:
   void swap(Json &) noexcept;
+  std::string serializeNumber() const;
+  std::string serializeString() const;
+  std::string serializeArray() const;
+  std::string serializeObject() const;
+  // PIMPL
   std::unique_ptr<JsonValue> value_;
 };
 
