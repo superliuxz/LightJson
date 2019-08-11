@@ -177,7 +177,7 @@ TEST(ParseSuccess, Object) {
       "\"i\" : 123 , "
       "\"s\" : \"abc\", "
       "\"a\" : [ 1, 2, 3 ],"
-      "\"o\" : { \"1\" : 1, 2 : \"2\", \"3\" : 3 }"
+      "\"o\" : { \"1\" : 1.3, \"2\" : \"2\", \"3\" : null }"
       " } ");
   EXPECT_TRUE(json.isObject());
   EXPECT_EQ(json.size(), 7);
@@ -207,6 +207,11 @@ TEST(ParseSuccess, Object) {
 
   EXPECT_TRUE(json["o"].isObject());
   EXPECT_EQ(json["o"].size(), 3);
+  EXPECT_TRUE(json["o"]["1"].isNumber());
+  EXPECT_EQ(json["o"]["1"].toDouble(), 1.3);
+  EXPECT_TRUE(json["o"]["2"].isString());
+  EXPECT_EQ(json["o"]["2"].toString(), "2");
+  EXPECT_TRUE(json["o"]["3"].isNull());
 }
 
 TEST(ParseError, InvalidValue) {
