@@ -15,8 +15,10 @@ Json::Json(nullptr_t) : value_(std::make_unique<JsonValue>(nullptr)) {}
 Json::Json(bool val) : value_(std::make_unique<JsonValue>(val)) {}
 Json::Json(double val) : value_(std::make_unique<JsonValue>(val)) {}
 Json::Json(const std::string &val) : value_(std::make_unique<JsonValue>(val)) {}
-Json::Json(const std::vector<Json> &val) : value_(std::make_unique<JsonValue>(
-    val)) {}
+Json::Json(const Json::array &val)
+    : value_(std::make_unique<JsonValue>(val)) {}
+Json::Json(const lightjson::Json::object &val)
+    : value_(std::make_unique<JsonValue>(val)) {}
 // Copy ctor
 Json::Json(const Json &o) {
   switch (o.getType()) {
@@ -38,6 +40,10 @@ Json::Json(const Json &o) {
     }
     case JsonType::kArray: {
       value_ = std::make_unique<JsonValue>(o.toArray());
+      break;
+    }
+    case JsonType::kObject: {
+      value_ = std::make_unique<JsonValue>(o.toObject());
       break;
     }
   }
@@ -82,11 +88,13 @@ bool Json::isBool() const noexcept { return getType() == JsonType::kBool; }
 bool Json::isNumber() const noexcept { return getType() == JsonType::kNumber; }
 bool Json::isString() const noexcept { return getType() == JsonType::kString; }
 bool Json::isArray() const noexcept { return getType() == JsonType::kArray; }
+bool Json::isObject() const noexcept { return getType() == JsonType::kObject; }
 
 bool Json::toBool() const { return value_->toBool(); }
 double Json::toDouble() const { return value_->toDouble(); }
 std::string Json::toString() const { return value_->toString(); }
-std::vector<Json> Json::toArray() const { return value_->toArray(); }
+Json::array Json::toArray() const { return value_->toArray(); }
+Json::object Json::toObject() const { return value_->toObject(); }
 
 size_t Json::size() const { return value_->size(); }
 
@@ -97,6 +105,14 @@ const Json &Json::operator[](size_t pos) const {
   return value_->operator[](pos);
 }
 
+Json &Json::operator[](const std::string &key) {
+  return value_->operator[](key);
+}
+
+const Json &Json::operator[](const std::string &key) const {
+  return value_->operator[](key);
+}
+
 bool Json::operator==(const lightjson::Json &o) const {
   if (this->getType() != o.getType()) return false;
   switch (this->getType()) {
@@ -105,6 +121,7 @@ bool Json::operator==(const lightjson::Json &o) const {
     case JsonType::kNumber: return this->toDouble() == o.toDouble();
     case JsonType::kString: return this->toString() == o.toString();
     case JsonType::kArray: return this->toArray() == o.toArray();
+    case JsonType::kObject: return this->toObject() == o.toObject();
     default: return false;
   }
 }

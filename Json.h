@@ -9,6 +9,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 namespace lightjson {
 
@@ -26,6 +27,8 @@ class JsonValue;
 
 class Json {
  public:
+  using array = std::vector<Json>;
+  using object = std::unordered_map<std::string, Json>;
   // ctors
   explicit Json();
   explicit Json(std::nullptr_t);
@@ -34,7 +37,8 @@ class Json {
   explicit Json(double val);
   explicit Json(const char *cStr) : Json(std::string(cStr)) {}
   explicit Json(const std::string &);
-  explicit Json(const std::vector<Json> &);
+  explicit Json(const Json::array &);
+  explicit Json(const Json::object &);
   // Copy ctor and copy assignment
   Json(const Json &);
   Json &operator=(const Json &);
@@ -51,18 +55,23 @@ class Json {
   bool isNumber() const noexcept;
   bool isString() const noexcept;
   bool isArray() const noexcept;
+  bool isObject() const noexcept;
 
   bool toBool() const;
   double toDouble() const;
   std::string toString() const;
-  std::vector<Json> toArray() const;
+  Json::array toArray() const;
+  Json::object toObject() const;
 
   size_t size() const;
 
   // operators
-  // [] access
+  // random access
   Json &operator[](size_t);
   const Json &operator[](size_t) const;
+  // key-val access
+  Json &operator[](const std::string &);
+  const Json &operator[](const std::string &) const;
 
   bool operator==(const Json &) const;
   inline bool operator!=(const Json &o) {

@@ -17,7 +17,7 @@ class Parser {
   explicit Parser(const char *data) : curr_(data) {}
   explicit Parser(const std::string &data) : curr_(data.c_str()) {}
   // Make the Parser uncopiable.
-  Parser(Parser &) = delete;
+  Parser(const Parser &) = delete;
   Parser &operator=(const Parser &) = delete;
 
   Json parse();
@@ -26,11 +26,13 @@ class Parser {
   const char *curr_;
 
   Json parseValue();
-  Json parseLiteral(const std::string &literal);
+  Json parseLiteral(const std::string &);
   Json parseNumber();
   Json parseString();
   Json parseArray();
+  Json parseObject();
 
+  std::string parseRawString();
   void parseWhiteSpace();
   int parse4hex(const char **);
   void error(const std::string &msg) const {

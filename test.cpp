@@ -59,17 +59,17 @@ lightjson::Json assertParseSuccess(const string &jsonStr) {
     EXPECT_EQ(expect, json.toString()); \
   } while (0)
 
-TEST(Success, Null) {
+TEST(ParseSuccess, Null) {
   TEST_NULL("null");
   TEST_NULL("   null\n\r\t");
 }
 
-TEST(Success, Bool) {
+TEST(ParseSuccess, Bool) {
   TEST_BOOL(true, "true");
   TEST_BOOL(false, "false");
 }
 
-TEST(Success, Number) {
+TEST(ParseSuccess, Number) {
   TEST_NUMBER(0.0, "0");
   TEST_NUMBER(0.0, "-0");
   TEST_NUMBER(0.0, "-0.0");
@@ -101,7 +101,7 @@ TEST(Success, Number) {
   TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
 }
 
-TEST(Success, String) {
+TEST(ParseSuccess, String) {
   TEST_STRING("", "\"\"");
   TEST_STRING("Hello", "\"Hello\"");
   TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
@@ -117,9 +117,13 @@ TEST(Success, String) {
               "\"\\ud834\\udd1e\"");  /* G clef sign U+1D11E */
 }
 
-TEST(Success, Array) {
+TEST(ParseSuccess, Array) {
   lightjson::Json json;
   json = assertParseSuccess("[ ]");
+  EXPECT_TRUE(json.isArray());
+  EXPECT_EQ(json.size(), 0);
+
+  json = assertParseSuccess("  [  ]  ");
   EXPECT_TRUE(json.isArray());
   EXPECT_EQ(json.size(), 0);
 
@@ -155,7 +159,57 @@ TEST(Success, Array) {
   EXPECT_EQ(json[3][2].toDouble(), 2);
 }
 
-TEST(Error, InvalidValue) {
+TEST(ParseSuccess, Object) {
+  lightjson::Json json;
+  json = assertParseSuccess("{}");
+  EXPECT_TRUE(json.isObject());
+  EXPECT_EQ(json.size(), 0);
+
+  json = assertParseSuccess(" {  }   ");
+  EXPECT_TRUE(json.isObject());
+  EXPECT_EQ(json.size(), 0);
+
+  json = assertParseSuccess(
+      " { "
+      "\"n\" : null , "
+      "\"f\" : false , "
+      "\"t\" : true , "
+      "\"i\" : 123 , "
+      "\"s\" : \"abc\", "
+      "\"a\" : [ 1, 2, 3 ],"
+      "\"o\" : { \"1\" : 1, 2 : \"2\", \"3\" : 3 }"
+      " } ");
+  EXPECT_TRUE(json.isObject());
+  EXPECT_EQ(json.size(), 7);
+
+  EXPECT_TRUE(json["n"].isNull());
+
+  EXPECT_TRUE(json["f"].isBool());
+  EXPECT_EQ(json["f"].toBool(), false);
+
+  EXPECT_TRUE(json["t"].isBool());
+  EXPECT_EQ(json["t"].toBool(), true);
+
+  EXPECT_TRUE(json["i"].isNumber());
+  EXPECT_EQ(json["i"].toDouble(), 123.0);
+
+  EXPECT_TRUE(json["s"].isString());
+  EXPECT_EQ(json["s"].toString(), "abc");
+
+  EXPECT_TRUE(json["a"].isArray());
+  EXPECT_EQ(json["a"].size(), 3);
+  EXPECT_TRUE(json["a"][0].isNumber());
+  EXPECT_EQ(json["a"][0].toDouble(), 1);
+  EXPECT_TRUE(json["a"][1].isNumber());
+  EXPECT_EQ(json["a"][1].toDouble(), 2);
+  EXPECT_TRUE(json["a"][2].isNumber());
+  EXPECT_EQ(json["a"][2].toDouble(), 3);
+
+  EXPECT_TRUE(json["o"].isObject());
+  EXPECT_EQ(json["o"].size(), 3);
+}
+
+TEST(ParseError, InvalidValue) {
   TEST_ERROR("Invalid value", "nul");
   TEST_ERROR("Invalid value", "?");
   TEST_ERROR("Invalid value", "+0");
@@ -170,48 +224,48 @@ TEST(Error, InvalidValue) {
   TEST_ERROR("Invalid value", "[\"a\", nul]");
 }
 
-TEST(Error, RootNotSingular) {
+TEST(ParseError, RootNotSingular) {
   TEST_ERROR("Root not singular", "null x");
   TEST_ERROR("Root not singular", "0123");
   TEST_ERROR("Root not singular", "0x0");
   TEST_ERROR("Root not singular", "0x123");
 }
 
-TEST(Error, NumberTooBig) {
+TEST(ParseError, NumberTooBig) {
   TEST_ERROR("Number out of bound", "1e309");
   TEST_ERROR("Number out of bound", "-1e309");
 }
 
-TEST(Error, MissingQuote) {
+TEST(ParseError, MissingQuote) {
   TEST_ERROR("Missing quotation mark", "\"");
   TEST_ERROR("Missing quotation mark", "\"abc");
 }
 
-TEST(Error, InvalidEscape) {
+TEST(ParseError, InvalidEscape) {
   TEST_ERROR("Invalid escape character", "\"\\v\"");
   TEST_ERROR("Invalid escape character", "\"\\'\"");
   TEST_ERROR("Invalid escape character", "\"\\0\"");
   TEST_ERROR("Invalid escape character", "\"\\x12\"");
 }
 
-TEST(Error, MissQuotationMark) {
+TEST(ParseError, MissQuotationMark) {
   TEST_ERROR("Missing quotation mark", "\"");
   TEST_ERROR("Missing quotation mark", "\"abc");
 }
 
-TEST(Error, InvalidStringEscape) {
+TEST(ParseError, InvalidStringEscape) {
   TEST_ERROR("Invalid escape character", "\"\\v\"");
   TEST_ERROR("Invalid escape character", "\"\\'\"");
   TEST_ERROR("Invalid escape character", "\"\\0\"");
   TEST_ERROR("Invalid escape character", "\"\\x12\"");
 }
 
-TEST(Error, InvalidCharacter) {
+TEST(ParseError, InvalidCharacter) {
   TEST_ERROR("Invalid character", "\"\x01\"");
   TEST_ERROR("Invalid character", "\"\x1F\"");
 }
 
-TEST(Error, InvalidHexValue) {
+TEST(ParseError, InvalidHexValue) {
   TEST_ERROR("Invalid hex value", "\"\\u\"");
   TEST_ERROR("Invalid hex value", "\"\\u0\"");
   TEST_ERROR("Invalid hex value", "\"\\u01\"");
@@ -225,7 +279,7 @@ TEST(Error, InvalidHexValue) {
   TEST_ERROR("Invalid hex value", "\"\\u 123/\"");
 }
 
-TEST(Error, InvalidUnicodeSurrogate) {
+TEST(ParseError, InvalidUnicodeSurrogate) {
   TEST_ERROR("Invalid unicode surrogate", "\"\\uD800\"");
   TEST_ERROR("Invalid unicode surrogate", "\"\\uDBFF\"");
   TEST_ERROR("Invalid unicode surrogate", "\"\\uD800\\\\\\");
@@ -233,11 +287,75 @@ TEST(Error, InvalidUnicodeSurrogate) {
   TEST_ERROR("Invalid unicode surrogate", "\"\\uD800\\uE000\"");
 }
 
-TEST(Error, MissingClosingBracketComma) {
+TEST(ParseError, MissingClosingSquareBracketOrComma) {
   TEST_ERROR("Missing closing bracket or comma", "[1");
   TEST_ERROR("Missing closing bracket or comma", "[1}");
   TEST_ERROR("Missing closing bracket or comma", "[1 2");
   TEST_ERROR("Missing closing bracket or comma", "[[]");
+}
+
+TEST(ParseError, MissingKey) {
+  TEST_ERROR("Missing key", "{:1,");
+  TEST_ERROR("Missing key", "{1:1,");
+  TEST_ERROR("Missing key", "{true:1,");
+  TEST_ERROR("Missing key", "{false:1,");
+  TEST_ERROR("Missing key", "{null:1,");
+  TEST_ERROR("Missing key", "{[]:1,");
+  TEST_ERROR("Missing key", "{{}:1,");
+  TEST_ERROR("Missing key", "{\"a\":1,");
+}
+
+TEST(ParseError, MissingColon) {
+  TEST_ERROR("Missing colon", "{\"a\"}");
+  TEST_ERROR("Missing colon", "{\"a\",\"b\"}");
+}
+
+TEST(ParseError, MissingClosingCurlyBracketOrComma) {
+  TEST_ERROR("Missing closing bracket or comma", "{\"a\":1");
+  TEST_ERROR("Missing closing bracket or comma", "{\"a\":1]");
+  TEST_ERROR("Missing closing bracket or comma", "{\"a\":1 \"b\"");
+  TEST_ERROR("Missing closing bracket or comma", "{\"a\":{}");
+}
+
+TEST(Json, Constructor) {
+  lightjson::Json json;
+  json = lightjson::Json(nullptr);
+  EXPECT_TRUE(json.isNull());
+
+  json = lightjson::Json(true);
+  EXPECT_TRUE(json.isBool());
+  EXPECT_EQ(json.toBool(), true);
+
+  json = lightjson::Json(false);
+  EXPECT_TRUE(json.isBool());
+  EXPECT_EQ(json.toBool(), false);
+
+  json = lightjson::Json(0);
+  EXPECT_TRUE(json.isNumber());
+  EXPECT_EQ(json.toDouble(), 0);
+
+  json = lightjson::Json(100.1);
+  EXPECT_TRUE(json.isNumber());
+  EXPECT_EQ(json.toDouble(), 100.1);
+
+  json = lightjson::Json("hello");
+  EXPECT_TRUE(json.isString());
+  EXPECT_EQ(json.toString(), "hello");
+
+  lightjson::Json::array arr
+      {lightjson::Json(nullptr), lightjson::Json(true), lightjson::Json(1.2)};
+  json = lightjson::Json(arr);
+  EXPECT_TRUE(json.isArray());
+  EXPECT_TRUE(json[0].isNull());
+  EXPECT_TRUE(json[1].isBool());
+  EXPECT_TRUE(json[2].isNumber());
+
+  lightjson::Json::object obj;
+  obj.insert({"hello", lightjson::Json(nullptr)});
+  obj.insert({"world", lightjson::Json("!!")});
+  json = lightjson::Json(obj);
+  EXPECT_TRUE(json.isObject());
+  EXPECT_TRUE(json["world"].isString());
 }
 
 int main(int argc, char *argv[]) {

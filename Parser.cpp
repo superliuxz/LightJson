@@ -30,6 +30,7 @@ Json Parser::parseValue() {
     case 'f': return parseLiteral("false");
     case '\"': return parseString();
     case '[': return parseArray();
+    case '{': return parseObject();
     case '\0': error("Expect value");
     default: return parseNumber();
   }
@@ -73,6 +74,61 @@ Json Parser::parseNumber() {
   return Json(val);
 }
 
+Json Parser::parseString() {
+  return Json(parseRawString());
+}
+
+Json Parser::parseArray() {
+  Json::array arr;
+  curr_++;
+  parseWhiteSpace();
+  if (*curr_ == ']') {
+    curr_++;
+    return Json(arr);
+  }
+  for (;;) {
+    parseWhiteSpace();
+    arr.push_back(parseValue());
+    parseWhiteSpace();
+    if (*curr_ == ',')
+      curr_++;
+    else if (*curr_ == ']') {
+      curr_++;
+      return Json(arr);
+    } else
+      error("Missing closing bracket or comma");
+  }
+}
+
+Json Parser::parseObject() {
+  Json::object obj;
+  curr_++;
+  parseWhiteSpace();
+  if (*curr_ == '}') {
+    curr_++;
+    return Json(obj);
+  }
+  for (;;) {
+    parseWhiteSpace();
+    if (*curr_ != '"') error("Missing key");
+    auto key = parseRawString();
+    parseWhiteSpace();
+    if (*curr_++ != ':')
+      error("Missing colon");
+    parseWhiteSpace();
+    auto val = parseValue();
+    obj[key] = val;
+    parseWhiteSpace();
+    if (*curr_ == ',')
+      curr_++;
+    else if (*curr_ == '}') {
+      curr_++;
+      return Json(obj);
+    } else
+      error("Missing closing bracket or comma");
+  }
+}
+
 /*
 string = quotation-mark *char quotation-mark
 char = unescaped /
@@ -90,7 +146,7 @@ escape = %x5C          ; \
 quotation-mark = %x22  ; "
 unescaped = %x20-21 / %x23-5B / %x5D-10FFFF
  */
-Json Parser::parseString() {
+std::string Parser::parseRawString() {
   std::wstring_convert<std::codecvt_utf8<wchar_t> > convert;
   std::ostringstream oss;
   const char *p = curr_;
@@ -101,7 +157,7 @@ Json Parser::parseString() {
         curr_ = ++p;
         const char *cstr = oss.str().c_str();
         const auto size = oss.tellp();
-        return Json(std::string(cstr, size));
+        return std::string(cstr, size);
       }
         // Escape.
       case '\\':
@@ -168,28 +224,6 @@ Json Parser::parseString() {
           error("Invalid character");
         oss << *p;
     }
-  }
-}
-
-Json Parser::parseArray() {
-  std::vector<Json> arr;
-  curr_++;
-  parseWhiteSpace();
-  if (*curr_ == ']') {
-    curr_++;
-    return Json(arr);
-  }
-  for (;;) {
-    parseWhiteSpace();
-    arr.push_back(parseValue());
-    parseWhiteSpace();
-    if (*curr_ == ',')
-      curr_++;
-    else if (*curr_ == ']') {
-      curr_++;
-      return Json(arr);
-    } else
-      error("Missing closing bracket or comma");
   }
 }
 

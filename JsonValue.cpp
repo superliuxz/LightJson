@@ -16,10 +16,12 @@ JsonType JsonValue::getType() const {
     return JsonType::kNumber;
   else if (std::holds_alternative<std::string>(val_))
     return JsonType::kString;
-  else if (std::holds_alternative<std::vector<Json> >(val_))
+  else if (std::holds_alternative<Json::array>(val_))
     return JsonType::kArray;
-  else
+  else {
+    assert(std::holds_alternative<Json::object>(val_));
     return JsonType::kObject;
+  }
 }
 
 bool JsonValue::toBool() const {
@@ -37,22 +39,43 @@ std::string JsonValue::toString() const {
   return std::get<std::string>(val_);
 }
 
-std::vector<Json> JsonValue::toArray() const {
-  assert(std::holds_alternative<std::vector<Json> >(val_));
-  return std::get<std::vector<Json> >(val_);
+Json::array JsonValue::toArray() const {
+  assert(std::holds_alternative<Json::array>(val_));
+  return std::get<Json::array>(val_);
+}
+
+Json::object JsonValue::toObject() const {
+  assert(std::holds_alternative<Json::object>(val_));
+  return std::get<Json::object>(val_);
 }
 
 size_t JsonValue::size() const {
-  assert(std::holds_alternative<std::vector<Json> >(val_));
-  return std::get<std::vector<Json> >(val_).size();
+  if (std::holds_alternative<Json::array>(val_))
+    return std::get<Json::array>(val_).size();
+  assert(std::holds_alternative<Json::object>(val_));
+  return std::get<Json::object>(val_).size();
 }
 
 const Json &JsonValue::operator[](size_t pos) const {
-  assert(std::holds_alternative<std::vector<Json> >(val_));
-  return std::get<std::vector<Json> >(val_)[pos];
+  assert(std::holds_alternative<Json::array>(val_));
+  return std::get<Json::array>(val_)[pos];
 }
 
 Json &JsonValue::operator[](size_t pos) {
-  assert(std::holds_alternative<std::vector<Json> >(val_));
-  return std::get<std::vector<Json> >(val_)[pos];
+  assert(std::holds_alternative<Json::array>(val_));
+  return std::get<Json::array>(val_)[pos];
+}
+
+const Json &JsonValue::operator[](const std::string &key) const {
+  assert(std::holds_alternative<Json::object>(val_));
+  // https://en.cppreference.com/w/cpp/container/unordered_map/operator_at
+  // operator[] is non-const because it inserts the key if it doesn't exist.
+  // If this behavior is undesirable or if the container is const, at() may be
+  // used.
+  return std::get<Json::object>(val_).at(key);
+}
+
+Json &JsonValue::operator[](const std::string &key) {
+  assert(std::holds_alternative<Json::object>(val_));
+  return std::get<Json::object>(val_).at(key);
 }
