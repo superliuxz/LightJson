@@ -10,17 +10,9 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include "../src/JsonType.h"
 
 namespace lightjson {
-
-enum class JsonType {
-  kNull,
-  kBool,
-  kNumber,
-  kString,
-  kArray,
-  kObject
-};
 
 // Forward declaration for unique_ptr.
 class JsonValue;

@@ -1,4 +1,4 @@
 # LightJson
 
-A light weight recursive descent Json parser written with c11 standard,
+A light weight recursive descent Json parser written with c14 standard,
 with no external dependencies.

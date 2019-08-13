@@ -4,11 +4,13 @@
 
 #include <gtest/gtest.h>
 #include <string>
-#include "Json.h"
+#include "../include/Json.h"
 
-lightjson::Json assertParseSuccess(const std::string &jsonStr) {
+using namespace ::lightjson;
+
+Json assertParseSuccess(const std::string &jsonStr) {
   std::string errMsg;
-  auto json = lightjson::Json::parse(jsonStr, errMsg);
+  auto json = Json::parse(jsonStr, errMsg);
   EXPECT_EQ(errMsg, "");
   return json;
 }
@@ -16,9 +18,8 @@ lightjson::Json assertParseSuccess(const std::string &jsonStr) {
 #define TEST_ERROR(expect, strJson)       \
   do {                                    \
     std::string errMsg;                   \
-    lightjson::Json json =                \
-        lightjson::Json::                 \
-        parse(strJson, errMsg);           \
+    Json json =                           \
+        Json:: parse(strJson, errMsg);    \
     auto pos = errMsg.find_first_of(":"); \
     auto actual = errMsg.substr(0, pos);  \
     EXPECT_EQ(expect, actual);            \
@@ -37,7 +38,7 @@ lightjson::Json assertParseSuccess(const std::string &jsonStr) {
         assertParseSuccess(content);   \
     EXPECT_TRUE(json.isBool());        \
     EXPECT_EQ(expect, json.toBool());  \
-    json = lightjson::Json(!expect);   \
+    json = Json(!expect);   \
     EXPECT_EQ(!expect, json.toBool()); \
   } while (0)
 
@@ -59,7 +60,7 @@ lightjson::Json assertParseSuccess(const std::string &jsonStr) {
 
 #define TEST_ROUNDTRIP(expect)                        \
   do {                                                \
-    lightjson::Json json =                            \
+    Json json =                            \
         assertParseSuccess(expect);                   \
     auto actual = json.serialize();                   \
     if (json.isNumber())                              \
@@ -128,7 +129,7 @@ TEST(ParseSuccess, String) {
 }
 
 TEST(ParseSuccess, Array) {
-  lightjson::Json json;
+  Json json;
   json = assertParseSuccess("[ ]");
   EXPECT_TRUE(json.isArray());
   EXPECT_EQ(json.size(), 0);
@@ -140,11 +141,11 @@ TEST(ParseSuccess, Array) {
   json = assertParseSuccess("[ null , false , true , 123 , \"abc\" ]");
   EXPECT_TRUE(json.isArray());
   EXPECT_EQ(json.size(), 5);
-  EXPECT_EQ(json[0], lightjson::Json(nullptr));
-  EXPECT_EQ(json[1], lightjson::Json(false));
-  EXPECT_EQ(json[2], lightjson::Json(true));
-  EXPECT_EQ(json[3], lightjson::Json(123.0));
-  EXPECT_EQ(json[4], lightjson::Json("abc"));
+  EXPECT_EQ(json[0], Json(nullptr));
+  EXPECT_EQ(json[1], Json(false));
+  EXPECT_EQ(json[2], Json(true));
+  EXPECT_EQ(json[3], Json(123.0));
+  EXPECT_EQ(json[4], Json("abc"));
 
   json = assertParseSuccess("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]");
   EXPECT_TRUE(json.isArray());
@@ -170,7 +171,7 @@ TEST(ParseSuccess, Array) {
 }
 
 TEST(ParseSuccess, Object) {
-  lightjson::Json json;
+  Json json;
   json = assertParseSuccess("{}");
   EXPECT_TRUE(json.isObject());
   EXPECT_EQ(json.size(), 0);
@@ -391,42 +392,42 @@ TEST(ParseError, MissingClosingCurlyBracketOrComma) {
 }
 
 TEST(Json, Constructor) {
-  lightjson::Json json;
-  json = lightjson::Json(nullptr);
+  Json json;
+  json = Json(nullptr);
   EXPECT_TRUE(json.isNull());
 
-  json = lightjson::Json(true);
+  json = Json(true);
   EXPECT_TRUE(json.isBool());
   EXPECT_EQ(json.toBool(), true);
 
-  json = lightjson::Json(false);
+  json = Json(false);
   EXPECT_TRUE(json.isBool());
   EXPECT_EQ(json.toBool(), false);
 
-  json = lightjson::Json(0);
+  json = Json(0);
   EXPECT_TRUE(json.isNumber());
   EXPECT_EQ(json.toNumber(), 0);
 
-  json = lightjson::Json(100.1);
+  json = Json(100.1);
   EXPECT_TRUE(json.isNumber());
   EXPECT_EQ(json.toNumber(), 100.1);
 
-  json = lightjson::Json("hello");
+  json = Json("hello");
   EXPECT_TRUE(json.isString());
   EXPECT_EQ(json.toString(), "hello");
 
-  lightjson::Json::array arr
-      {lightjson::Json(nullptr), lightjson::Json(true), lightjson::Json(1.2)};
-  json = lightjson::Json(arr);
+  Json::array arr
+      {Json(nullptr), Json(true), Json(1.2)};
+  json = Json(arr);
   EXPECT_TRUE(json.isArray());
   EXPECT_TRUE(json[0].isNull());
   EXPECT_TRUE(json[1].isBool());
   EXPECT_TRUE(json[2].isNumber());
 
-  lightjson::Json::object obj;
-  obj.insert({"hello", lightjson::Json(nullptr)});
-  obj.insert({"world", lightjson::Json("!!")});
-  json = lightjson::Json(obj);
+  Json::object obj;
+  obj.insert({"hello", Json(nullptr)});
+  obj.insert({"world", Json("!!")});
+  json = Json(obj);
   EXPECT_TRUE(json.isObject());
   EXPECT_TRUE(json["world"].isString());
 }

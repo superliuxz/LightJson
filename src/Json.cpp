@@ -5,47 +5,48 @@
 #include <memory>
 #include <sstream>
 #include <iomanip>
-#include "Json.h"
+#include "../include/Json.h"
 #include "JsonValue.h"
 #include "Parser.h"
+#include "JsonType.h"
 
 using namespace ::lightjson;
 
 // Ctors
 Json::Json() : Json(nullptr) {}
-Json::Json(nullptr_t) : value_(std::make_unique<JsonValue>(nullptr)) {}
-Json::Json(bool val) : value_(std::make_unique<JsonValue>(val)) {}
-Json::Json(double val) : value_(std::make_unique<JsonValue>(val)) {}
-Json::Json(const std::string &val) : value_(std::make_unique<JsonValue>(val)) {}
+Json::Json(nullptr_t) : value_(std::make_unique<JsonNull>(nullptr)) {}
+Json::Json(bool val) : value_(std::make_unique<JsonBool>(val)) {}
+Json::Json(double val) : value_(std::make_unique<JsonDouble>(val)) {}
+Json::Json(const std::string &val) : value_(std::make_unique<JsonString>(val)) {}
 Json::Json(const Json::array &val)
-    : value_(std::make_unique<JsonValue>(val)) {}
+    : value_(std::make_unique<JsonArray>(val)) {}
 Json::Json(const lightjson::Json::object &val)
-    : value_(std::make_unique<JsonValue>(val)) {}
+    : value_(std::make_unique<JsonObject>(val)) {}
 // Copy ctor
 Json::Json(const Json &o) {
   switch (o.getType()) {
     case JsonType::kNull: {
-      value_ = std::make_unique<JsonValue>(nullptr);
+      value_ = std::make_unique<JsonNull>(nullptr);
       break;
     }
     case JsonType::kNumber: {
-      value_ = std::make_unique<JsonValue>(o.toNumber());
+      value_ = std::make_unique<JsonDouble>(o.toNumber());
       break;
     }
     case JsonType::kBool: {
-      value_ = std::make_unique<JsonValue>(o.toBool());
+      value_ = std::make_unique<JsonBool>(o.toBool());
       break;
     }
     case JsonType::kString: {
-      value_ = std::make_unique<JsonValue>(o.toString());
+      value_ = std::make_unique<JsonString>(o.toString());
       break;
     }
     case JsonType::kArray: {
-      value_ = std::make_unique<JsonValue>(o.toArray());
+      value_ = std::make_unique<JsonArray>(o.toArray());
       break;
     }
     case JsonType::kObject: {
-      value_ = std::make_unique<JsonValue>(o.toObject());
+      value_ = std::make_unique<JsonObject>(o.toObject());
       break;
     }
   }
@@ -82,7 +83,7 @@ Json Json::parse(const std::string &data, std::string &error) {
 }
 
 std::string Json::serialize() const {
-  switch (value_->getType()) {
+  switch (value_->type()) {
     case JsonType::kNull: return "null";
     case JsonType::kBool: return value_->toBool() ? "true" : "false";
     case JsonType::kNumber: return serializeNumber();
@@ -93,7 +94,7 @@ std::string Json::serialize() const {
 }
 
 JsonType Json::getType() const {
-  return value_->getType();
+  return value_->type();
 }
 
 bool Json::isNull() const noexcept { return getType() == JsonType::kNull; }

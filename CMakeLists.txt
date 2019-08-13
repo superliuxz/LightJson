@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(LightJson)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 enable_testing() # CLion can run individual suite with this line.
 
 ##
@@ -43,7 +43,7 @@ endif()
 # end of copy
 ##
 
-add_library(LightJson SHARED Parser.h Json.h Parser.cpp JsonException.h Json.cpp JsonValue.cpp JsonValue.h)
-add_executable(unittest test.cpp)
+add_library(LightJson SHARED src/Parser.h include/Json.h src/Parser.cpp src/JsonException.h src/Json.cpp src/JsonValue.h)
+add_executable(unittest tests/test.cpp)
 target_link_libraries(unittest LightJson gtest_main)
-add_test(unittest test.cpp)
+add_test(unittest tests/test.cpp)

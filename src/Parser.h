@@ -6,7 +6,8 @@
 #define LIGHTJSON_PARSER_H
 
 #include <string>
-#include "Json.h"
+#include "../include/Json.h"
+#include "JsonType.h"
 #include "JsonException.h"
 
 namespace lightjson {
