@@ -86,8 +86,24 @@ class JsonObject : public Value<Json::object, JsonType::kObject> {
   explicit JsonObject(const Json::object &val) : Value(val) {}
   explicit JsonObject(Json::object &&val) : Value(val) {}
   Json::object toObject() const override { return val_; }
-  const Json &operator[](const std::string &i) const override { return val_.at(i); }
-  Json &operator[](const std::string &i) override { return val_.at(i); }
+  // https://en.cppreference.com/w/cpp/container/unordered_map/operator_at
+  // operator[] is non-const because it inserts the key if it doesn't exist.
+  // If this behavior is undesirable or if the container is const, at() may be
+  // used.
+  const Json &operator[](const std::string &i) const override {
+    try {
+      return val_.at(i);
+    } catch (std::out_of_range& e) {
+      throw JsonException("Key " + i + " does not exist");
+    }
+  }
+  Json &operator[](const std::string &i) override {
+    try {
+      return val_.at(i);
+    } catch (std::out_of_range& e) {
+      throw JsonException("Key " + i + " does not exist");
+    }
+  }
   size_t size() const noexcept override { return val_.size(); }
 };
 

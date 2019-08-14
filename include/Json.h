@@ -22,15 +22,20 @@ class Json {
   using array = std::vector<Json>;
   using object = std::unordered_map<std::string, Json>;
   // ctors
-  explicit Json();
-  explicit Json(std::nullptr_t);
-  explicit Json(bool);
-  explicit Json(int val) : Json(val * 1.0f) {}
-  explicit Json(double val);
-  explicit Json(const char *cStr) : Json(std::string(cStr)) {}
-  explicit Json(const std::string &);
-  explicit Json(const Json::array &);
-  explicit Json(const Json::object &);
+  Json() : Json(nullptr) {}
+  Json(std::nullptr_t);
+  Json(bool);
+  Json(int val) : Json(val * 1.0f) {}
+  Json(double);
+  Json(const char *cStr) : Json(std::string(cStr)) {}
+  Json(const std::string &);
+  Json(std::string &&);
+  Json(const Json::array &);
+  Json(Json::array &&);
+  Json(const Json::object &);
+  Json(Json::object &&);
+  Json(void *) = delete;
+
   // Copy ctor and copy assignment
   Json(const Json &);
   Json &operator=(const Json &);
@@ -72,8 +77,8 @@ class Json {
     return !(this->operator==(o));
   }
   // Stream
-  inline std::ostream &operator<<(std::ostream &os) {
-    return os << this->serialize();
+  friend std::ostream &operator<<(std::ostream &os, const Json &json) {
+    return os << json.serialize();
   }
 
  private:

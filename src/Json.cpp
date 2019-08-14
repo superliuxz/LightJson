@@ -13,15 +13,19 @@
 using namespace ::lightjson;
 
 // Ctors
-Json::Json() : Json(nullptr) {}
 Json::Json(nullptr_t) : value_(std::make_unique<JsonNull>(nullptr)) {}
 Json::Json(bool val) : value_(std::make_unique<JsonBool>(val)) {}
 Json::Json(double val) : value_(std::make_unique<JsonDouble>(val)) {}
 Json::Json(const std::string &val) : value_(std::make_unique<JsonString>(val)) {}
+Json::Json(std::string &&val) : value_(std::make_unique<JsonString>(std::move(val))) {}
 Json::Json(const Json::array &val)
     : value_(std::make_unique<JsonArray>(val)) {}
+Json::Json(Json::array &&val)
+    : value_(std::make_unique<JsonArray>(std::move(val))) {}
 Json::Json(const lightjson::Json::object &val)
     : value_(std::make_unique<JsonObject>(val)) {}
+Json::Json(lightjson::Json::object &&val)
+    : value_(std::make_unique<JsonObject>(std::move(val))) {}
 // Copy ctor
 Json::Json(const Json &o) {
   switch (o.getType()) {
@@ -58,9 +62,7 @@ Json &Json::operator=(const Json &o) {
   return *this;
 }
 // Move ctor
-Json::Json(Json &&o) noexcept : value_(std::move(o.value_)) {
-  o.value_ = nullptr;
-}
+Json::Json(Json &&o) noexcept = default;
 // Move assignment
 Json &Json::operator=(Json &&o) noexcept = default;
 // Dtor
