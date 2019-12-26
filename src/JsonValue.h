@@ -5,7 +5,7 @@
 #ifndef LIGHTJSON_JSONVALUE_H
 #define LIGHTJSON_JSONVALUE_H
 
-#include <stddef.h>
+#include <cstddef>
 #include <variant>
 #include "../include/Json.h"
 #include "JsonType.h"
@@ -93,14 +93,14 @@ class JsonObject : public Value<Json::object, JsonType::kObject> {
   const Json &operator[](const std::string &i) const override {
     try {
       return val_.at(i);
-    } catch (std::out_of_range& e) {
+    } catch (std::out_of_range &e) {
       throw JsonException("Key " + i + " does not exist");
     }
   }
   Json &operator[](const std::string &i) override {
     try {
       return val_.at(i);
-    } catch (std::out_of_range& e) {
+    } catch (std::out_of_range &e) {
       throw JsonException("Key " + i + " does not exist");
     }
   }

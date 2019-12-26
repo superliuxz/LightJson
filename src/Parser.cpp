@@ -3,7 +3,7 @@
 //
 
 #include <cstring>
-#include <math.h>
+#include <cmath>
 #include <locale>
 #include <codecvt>
 #include <sstream>

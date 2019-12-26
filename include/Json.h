@@ -20,13 +20,8 @@ class JsonValue;
 class Json {
  public:
   using array = std::vector<Json>;
-  friend std::ostream &operator<<(std::ostream &os, const array &array) {
-    return os << Json(array).serialize();
-  }
   using object = std::unordered_map<std::string, Json>;
-  friend std::ostream &operator<<(std::ostream &os, const object &object) {
-    return os << Json(object).serialize();
-  }
+
   // ctors
   Json() : Json(nullptr) {}
   Json(std::nullptr_t);
@@ -51,7 +46,7 @@ class Json {
   // Dtor
   ~Json();
   // Parse and serialize
-  static Json parse(const std::string &data, std::string &error);
+  static Json parse(const std::string &, std::string &);
   std::string serialize() const;
 
   JsonType getType() const;
@@ -85,6 +80,12 @@ class Json {
   // Stream
   friend std::ostream &operator<<(std::ostream &os, const Json &json) {
     return os << json.serialize();
+  }
+  friend std::ostream &operator<<(std::ostream &os, const object &object) {
+    return os << Json(object).serialize();
+  }
+  friend std::ostream &operator<<(std::ostream &os, const array &array) {
+    return os << Json(array).serialize();
   }
 
  private:

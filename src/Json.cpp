@@ -13,11 +13,13 @@
 using namespace ::lightjson;
 
 // Ctors
-Json::Json(nullptr_t) : value_(std::make_unique<JsonNull>(nullptr)) {}
+Json::Json(std::nullptr_t) : value_(std::make_unique<JsonNull>(nullptr)) {}
 Json::Json(bool val) : value_(std::make_unique<JsonBool>(val)) {}
 Json::Json(double val) : value_(std::make_unique<JsonDouble>(val)) {}
-Json::Json(const std::string &val) : value_(std::make_unique<JsonString>(val)) {}
-Json::Json(std::string &&val) : value_(std::make_unique<JsonString>(std::move(val))) {}
+Json::Json(const std::string &val)
+    : value_(std::make_unique<JsonString>(val)) {}
+Json::Json(std::string &&val) : value_(std::make_unique<JsonString>(std::move(
+    val))) {}
 Json::Json(const Json::array &val)
     : value_(std::make_unique<JsonArray>(val)) {}
 Json::Json(Json::array &&val)
