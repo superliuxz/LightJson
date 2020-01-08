@@ -47,3 +47,6 @@ add_library(LightJson SHARED src/Parser.h include/Json.h src/Parser.cpp src/Json
 add_executable(unittest tests/test.cpp)
 target_link_libraries(unittest LightJson gtest_main)
 add_test(unittest tests/test.cpp)
+
+add_executable(main example/main.cpp)
+target_link_libraries(main LightJson)
