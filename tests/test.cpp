@@ -60,7 +60,7 @@ Json assertParseSuccess(const std::string &jsonStr) {
 
 #define TEST_ROUNDTRIP(expect)                        \
   do {                                                \
-    Json json =                            \
+    Json json =                                       \
         assertParseSuccess(expect);                   \
     auto actual = json.serialize();                   \
     if (json.isNumber())                              \
